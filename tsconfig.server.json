@@ -21,3 +21,4 @@
   "include": ["api/**/*", "db/**/*", "contracts/**/*"],
   "exclude": ["node_modules"]
 }
+Fix Vercel TypeScript build
