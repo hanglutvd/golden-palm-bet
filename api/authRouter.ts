@@ -35,7 +35,7 @@ export const authRouter = createRouter({
           .string()
           .min(2, "用户名至少2个字符")
           .max(50, "用户名最多50个字符")
-          .regex(/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/, "用户名只能包含字母、数字、下划线和中文"),
+          .regex(/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/, "用户名只能包含字母、数字、下划线和中文，不能包含空格"),
         password: z.string().min(6, "密码至少6个字符"),
       }),
     )

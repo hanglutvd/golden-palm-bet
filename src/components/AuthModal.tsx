@@ -167,6 +167,9 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
                     className="w-full rounded-md border border-app-border bg-app-bg px-9 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-app-gold focus:outline-none transition-colors"
                   />
                 </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  用户名只能包含字母、数字、下划线和中文，不能包含空格
+                </p>
               </div>
             </>
           )}
