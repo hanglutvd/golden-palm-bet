@@ -30,7 +30,7 @@ export const authRouter = createRouter({
   register: publicQuery
     .input(
       z.object({
-        email: z.string().email("请输入有效的邮箱地址"),
+        email: z.string().min(1, "请输入邮箱").regex(/^.+@.+\..+$/, "请输入有效的邮箱地址"),
         username: z
           .string()
           .min(2, "用户名至少2个字符")
