@@ -55,11 +55,11 @@ export async function createUser(data: {
   balance?: string;
   role?: "user" | "admin";
 }) {
-  const [{ id }] = await getDb()
+  const result = await getDb()
     .insert(users)
     .values(data)
-    .$returningId();
-  return findUserById(id);
+    .returning({ id: users.id });
+  return findUserById(result[0].id);
 }
 
 export async function setResetToken(userId: number, token: string, expiry: Date) {

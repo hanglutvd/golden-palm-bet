@@ -5,6 +5,10 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { appRouter } from "./router.js";
 import { createContext } from "./context.js";
 import { env } from "./lib/env.js";
+import { initDatabase } from "./init-db.js";
+
+// Initialize SQLite database (create tables, seed data)
+initDatabase();
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 
@@ -28,6 +32,6 @@ if (env.isProduction) {
 
   const port = parseInt(process.env.PORT || "3000");
   serve({ fetch: app.fetch, port }, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    console.log(`[server] Running on port ${port}`);
   });
 }
