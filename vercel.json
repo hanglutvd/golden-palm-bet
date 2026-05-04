@@ -1,16 +1,9 @@
 {
-  "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "/api/index"
     }
-  ],
-  "functions": {
-    "api/index.ts": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
-Fix Vercel TypeScript build
