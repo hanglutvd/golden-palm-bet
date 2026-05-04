@@ -1,0 +1,165 @@
+import { X, Wallet, TrendingUp, TrendingDown, Package, Clock, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { trpc } from "@/providers/trpc";
+import { useAuth } from "@/hooks/useAuth";
+
+interface PortfolioModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
+  const { user } = useAuth();
+  const { data: portfolio, isLoading } = trpc.trading.portfolio.useQuery(undefined, {
+    enabled: open,
+  });
+  const { data: transactions } = trpc.trading.myTransactions.useQuery(undefined, {
+    enabled: open,
+  });
+
+  if (!open) return null;
+
+  const hasHoldings = portfolio && portfolio.holdings.length > 0;
+  const hasTransactions = transactions && transactions.length > 0;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-app-card border border-app-border shadow-2xl">
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-app-border bg-app-card/95 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <Wallet className="h-5 w-5 text-app-gold" />
+            <div>
+              <h2 className="text-base font-bold text-foreground">我的持仓</h2>
+              <p className="text-xs text-muted-foreground">{user?.username}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-app-hover transition-colors">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-6">
+          {/* Asset Summary */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-lg bg-app-bg/60 border border-app-border/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground">账户余额</p>
+              <p className="text-lg font-bold text-app-gold tabular-nums">
+                ¥{portfolio?.balance.toLocaleString("zh-CN", { minimumFractionDigits: 2 }) ?? "0.00"}
+              </p>
+            </div>
+            <div className="rounded-lg bg-app-bg/60 border border-app-border/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground">持仓市值</p>
+              <p className="text-lg font-bold text-foreground tabular-nums">
+                ¥{portfolio?.totalMarketValue.toLocaleString("zh-CN", { minimumFractionDigits: 2 }) ?? "0.00"}
+              </p>
+            </div>
+            <div className="rounded-lg bg-app-bg/60 border border-app-border/60 px-4 py-3">
+              <p className="text-xs text-muted-foreground">总资产</p>
+              <p className="text-lg font-bold text-app-gold tabular-nums">
+                ¥{portfolio?.totalAssets.toLocaleString("zh-CN", { minimumFractionDigits: 2 }) ?? "0.00"}
+              </p>
+            </div>
+          </div>
+
+          {/* P/L summary */}
+          {portfolio && portfolio.totalPnl !== 0 && (
+            <div className={`flex items-center gap-2 rounded-lg px-4 py-2.5 border ${portfolio.totalPnl >= 0 ? "bg-app-green/5 border-app-green/20" : "bg-app-red/5 border-app-red/20"}`}>
+              {portfolio.totalPnl >= 0 ? <TrendingUp className="h-4 w-4 text-app-green" /> : <TrendingDown className="h-4 w-4 text-app-red" />}
+              <span className="text-sm">
+                持仓盈亏：
+                <span className={`font-bold ${portfolio.totalPnl >= 0 ? "text-app-green" : "text-app-red"}`}>
+                  {portfolio.totalPnl >= 0 ? "+" : ""}¥{portfolio.totalPnl.toFixed(2)}
+                </span>
+              </span>
+            </div>
+          )}
+
+          {/* Holdings */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Package className="h-4 w-4 text-app-gold" />
+              <h3 className="text-sm font-semibold text-foreground">当前持仓</h3>
+            </div>
+
+            {isLoading ? (
+              <p className="text-sm text-muted-foreground text-center py-4">加载中...</p>
+            ) : !hasHoldings ? (
+              <div className="rounded-lg bg-app-bg/40 border border-app-border/40 px-4 py-6 text-center">
+                <p className="text-sm text-muted-foreground">暂无持仓</p>
+                <p className="text-xs text-muted-foreground mt-1">在行情页面买入电影股票即可开始投资</p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-app-border overflow-hidden">
+                <div className="grid grid-cols-[1fr,auto,auto,auto,auto] gap-3 px-3 py-2 bg-app-bg/60 border-b border-app-border">
+                  <span className="text-xs font-semibold text-muted-foreground">电影</span>
+                  <span className="text-xs font-semibold text-muted-foreground text-right">持股</span>
+                  <span className="text-xs font-semibold text-muted-foreground text-right">成本价</span>
+                  <span className="text-xs font-semibold text-muted-foreground text-right">现价</span>
+                  <span className="text-xs font-semibold text-muted-foreground text-right">盈亏</span>
+                </div>
+                <div className="divide-y divide-app-border/40">
+                  {portfolio?.holdings.map((h) => (
+                    <div key={h.movieId} className="grid grid-cols-[1fr,auto,auto,auto,auto] gap-3 items-center px-3 py-2.5">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">{h.movieName}</p>
+                        <p className="text-xs text-muted-foreground">{h.director}</p>
+                      </div>
+                      <span className="text-sm text-foreground tabular-nums text-right">{h.quantity}</span>
+                      <span className="text-sm text-muted-foreground tabular-nums text-right">¥{h.avgBuyPrice.toFixed(2)}</span>
+                      <span className="text-sm text-foreground tabular-nums text-right">¥{h.currentPrice.toFixed(2)}</span>
+                      <div className={`text-right ${h.pnl >= 0 ? "text-app-green" : "text-app-red"}`}>
+                        <span className="text-sm font-medium tabular-nums">{h.pnl >= 0 ? "+" : ""}¥{h.pnl.toFixed(2)}</span>
+                        <span className="text-xs tabular-nums ml-1">({h.pnl >= 0 ? "+" : ""}{h.pnlPercent.toFixed(1)}%)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Transaction History */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <Clock className="h-4 w-4 text-app-gold" />
+              <h3 className="text-sm font-semibold text-foreground">交易记录</h3>
+            </div>
+
+            {!hasTransactions ? (
+              <div className="rounded-lg bg-app-bg/40 border border-app-border/40 px-4 py-6 text-center">
+                <p className="text-sm text-muted-foreground">暂无交易记录</p>
+              </div>
+            ) : (
+              <div className="rounded-lg border border-app-border overflow-hidden">
+                <div className="grid grid-cols-[auto,1fr,auto,auto,auto] gap-3 px-3 py-2 bg-app-bg/60 border-b border-app-border">
+                  <span className="text-xs font-semibold text-muted-foreground">类型</span>
+                  <span className="text-xs font-semibold text-muted-foreground">电影</span>
+                  <span className="text-xs font-semibold text-muted-foreground text-right">股数</span>
+                  <span className="text-xs font-semibold text-muted-foreground text-right">价格</span>
+                  <span className="text-xs font-semibold text-muted-foreground text-right">金额</span>
+                </div>
+                <div className="divide-y divide-app-border/40 max-h-64 overflow-y-auto">
+                  {transactions?.map((tx) => (
+                    <div key={tx.id} className="grid grid-cols-[auto,1fr,auto,auto,auto] gap-3 items-center px-3 py-2">
+                      <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${tx.type === "buy" ? "bg-app-green/10 text-app-green" : "bg-app-red/10 text-app-red"}`}>
+                        {tx.type === "buy" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                        {tx.type === "buy" ? "买入" : "卖出"}
+                      </div>
+                      <span className="text-sm text-foreground truncate">{tx.movieName}</span>
+                      <span className="text-sm text-foreground tabular-nums text-right">{tx.quantity}</span>
+                      <span className="text-sm text-muted-foreground tabular-nums text-right">¥{tx.price.toFixed(2)}</span>
+                      <span className={`text-sm font-medium tabular-nums text-right ${tx.type === "buy" ? "text-app-red" : "text-app-green"}`}>
+                        {tx.type === "buy" ? "-" : "+"}¥{tx.totalAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

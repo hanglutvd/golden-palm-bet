@@ -1,0 +1,186 @@
+import { useState } from 'react';
+import { TrendingUp, TrendingDown, Minus, Info, ArrowUpDown, CalendarDays } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { trpc } from '@/providers/trpc';
+import { movieQuotes } from '@/data/movieData';
+import { MovieDetailModal } from './MovieDetailModal';
+
+export function MovieQuotes() {
+  const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'price' | 'premiere'>('price');
+
+  const { data: apiMovies, isLoading } = trpc.movie.list.useQuery(undefined, {
+    refetchOnWindowFocus: true,
+    retry: 1,
+  });
+
+  // Use API data when available (convert number id to string), fallback to static data
+  let movies = apiMovies
+    ? apiMovies.map((m) => ({ ...m, id: String(m.id) }))
+    : movieQuotes;
+
+  // Sort movies based on selected sort mode
+  if (sortBy === 'premiere') {
+    movies = [...movies].sort((a, b) => {
+      const dateA = a.premiereDate || '';
+      const dateB = b.premiereDate || '';
+      // "待定" or empty goes to the end
+      if (!dateA || dateA === '待定') return 1;
+      if (!dateB || dateB === '待定') return -1;
+      return dateA.localeCompare(dateB);
+    });
+  }
+
+  const selectedMovie = movies.find((m) => m.id === selectedMovieId) ?? null;
+
+  return (
+    <>
+      <div className="rounded-lg bg-app-card overflow-hidden">
+        {/* Section Title */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-app-border">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-app-gold">行情</h2>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="text-muted-foreground hover:text-foreground transition-colors">
+                    <Info className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="bg-app-card border-app-border max-w-xs">
+                  <p className="text-xs text-muted-foreground">
+                    价格根据市场买卖日结更新。次日09:00根据净成交量统一调整开盘价。
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <button
+            onClick={() => setSortBy(sortBy === 'price' ? 'premiere' : 'price')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
+              sortBy === 'premiere'
+                ? 'bg-app-gold/10 border-app-gold/30 text-app-gold'
+                : 'border-app-border/60 text-muted-foreground hover:text-foreground hover:bg-app-hover'
+            }`}
+          >
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            {sortBy === 'price' ? '按价格排序' : '按首映排序'}
+          </button>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-app-border">
+                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground w-12">
+                  排名
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  电影名称
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell w-36">
+                  导演
+                </th>
+                <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell w-28">
+                  首映时间
+                </th>
+                <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground w-24">
+                  当前价
+                </th>
+                <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground w-28">
+                  涨跌幅
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading && !movies.length ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    加载中...
+                  </td>
+                </tr>
+              ) : movies.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                    暂无数据
+                  </td>
+                </tr>
+              ) : (
+                movies.map((movie, index) => (
+                  <tr
+                    key={movie.id}
+                    onClick={() => setSelectedMovieId(movie.id)}
+                    className="border-b border-app-border/60 transition-colors duration-200 hover:bg-app-hover group cursor-pointer"
+                  >
+                    <td className="px-3 py-3 text-sm text-muted-foreground tabular-nums">
+                      {sortBy === 'premiere' ? index + 1 : movie.rank}
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="text-sm font-medium text-app-gold transition-colors duration-150 group-hover:underline group-hover:text-app-gold/80">
+                        {movie.name}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-sm text-muted-foreground hidden sm:table-cell">
+                      {movie.director}
+                    </td>
+                    <td className="px-3 py-3 text-sm text-muted-foreground hidden md:table-cell tabular-nums">
+                      <div className="flex items-center gap-1">
+                        <CalendarDays className="h-3 w-3 text-app-gold/60" />
+                        {movie.premiereDate || '待定'}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <span
+                        className={`text-sm font-semibold tabular-nums transition-colors duration-300 ${
+                          movie.trend === 'up'
+                            ? 'text-app-green'
+                            : movie.trend === 'down'
+                              ? 'text-app-red'
+                              : 'text-foreground'
+                        }`}
+                      >
+                        {movie.price.toFixed(2)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {movie.trend === 'up' && (
+                          <TrendingUp className="h-3.5 w-3.5 text-app-green" />
+                        )}
+                        {movie.trend === 'down' && (
+                          <TrendingDown className="h-3.5 w-3.5 text-app-red" />
+                        )}
+                        {movie.trend === 'flat' && (
+                          <Minus className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                        <span
+                          className={`text-sm font-medium tabular-nums ${
+                            movie.trend === 'up'
+                              ? 'text-app-green'
+                              : movie.trend === 'down'
+                                ? 'text-app-red'
+                                : 'text-muted-foreground'
+                          }`}
+                        >
+                          {movie.trend === 'up' ? '+' : ''}
+                          {movie.changePercent.toFixed(2)}%
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <MovieDetailModal
+        open={!!selectedMovie}
+        onClose={() => setSelectedMovieId(null)}
+        movie={selectedMovie}
+      />
+    </>
+  );
+}

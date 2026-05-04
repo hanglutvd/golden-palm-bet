@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD COLUMN `balance` decimal(12,2) NOT NULL DEFAULT '10000.00';
