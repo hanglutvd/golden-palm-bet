@@ -67,7 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (data: { email: string; username: string; password: string }) => {
-      await registerMutation.mutateAsync(data);
+      console.log("[useAuth] register called with:", { email: data.email, username: data.username });
+      try {
+        const result = await registerMutation.mutateAsync(data);
+        console.log("[useAuth] register mutation success:", result);
+      } catch (err: any) {
+        console.error("[useAuth] register mutation error:", err);
+        throw err;
+      }
     },
     [registerMutation],
   );

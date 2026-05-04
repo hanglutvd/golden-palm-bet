@@ -60,14 +60,17 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
         setError("用户名长度应为2-50个字符");
         return;
       }
+      console.log("[AuthModal] Calling register with:", { email: email.trim(), username: username.trim() });
       try {
         await register({ email: email.trim(), username: username.trim(), password });
+        console.log("[AuthModal] Register success");
         setSuccess("注册成功！");
         setTimeout(() => {
           onClose();
           resetForm();
         }, 1200);
       } catch (err: any) {
+        console.error("[AuthModal] Register error:", err);
         setError(err.message || "注册失败");
       }
     } else {
