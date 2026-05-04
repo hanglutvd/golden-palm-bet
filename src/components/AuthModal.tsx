@@ -44,6 +44,10 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
     setSuccess("");
 
     if (mode === "register") {
+      if (!email.trim() || !username.trim() || !password.trim() || !confirmPassword.trim()) {
+        setError("请填写所有字段");
+        return;
+      }
       if (password !== confirmPassword) {
         setError("两次输入的密码不一致");
         return;
@@ -52,8 +56,12 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
         setError("密码至少6个字符");
         return;
       }
+      if (username.length < 2 || username.length > 50) {
+        setError("用户名长度应为2-50个字符");
+        return;
+      }
       try {
-        await register({ email, username, password });
+        await register({ email: email.trim(), username: username.trim(), password });
         setSuccess("注册成功！");
         setTimeout(() => {
           onClose();
@@ -63,8 +71,12 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
         setError(err.message || "注册失败");
       }
     } else {
+      if (!identifier.trim() || !password.trim()) {
+        setError("请填写所有字段");
+        return;
+      }
       try {
-        await login({ identifier, password });
+        await login({ identifier: identifier.trim(), password });
         setSuccess("登录成功！");
         setTimeout(() => {
           onClose();
@@ -119,7 +131,7 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="px-6 py-5 space-y-4">
           {/* Error / Success messages */}
           {error && (
             <div className="flex items-center gap-2 rounded-lg bg-app-red/10 border border-app-red/20 px-3 py-2.5">
@@ -146,7 +158,6 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    required
                     className="w-full rounded-md border border-app-border bg-app-bg px-9 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-app-gold focus:outline-none transition-colors"
                   />
                 </div>
@@ -161,9 +172,6 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="设置一个昵称"
-                    required
-                    minLength={2}
-                    maxLength={50}
                     className="w-full rounded-md border border-app-border bg-app-bg px-9 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-app-gold focus:outline-none transition-colors"
                   />
                 </div>
@@ -185,7 +193,6 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="邮箱或用户名"
-                  required
                   className="w-full rounded-md border border-app-border bg-app-bg px-9 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-app-gold focus:outline-none transition-colors"
                 />
               </div>
@@ -202,8 +209,6 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="至少6个字符"
-                required
-                minLength={6}
                 className="w-full rounded-md border border-app-border bg-app-bg px-9 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-app-gold focus:outline-none transition-colors pr-10"
               />
               <button
@@ -227,7 +232,6 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="再次输入密码"
-                  required
                   className="w-full rounded-md border border-app-border bg-app-bg px-9 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-app-gold focus:outline-none transition-colors"
                 />
               </div>
