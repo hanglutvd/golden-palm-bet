@@ -30,12 +30,8 @@ export const authRouter = createRouter({
   register: publicQuery
     .input(
       z.object({
-        email: z.string().min(1, "请输入邮箱").regex(/^.+@.+\..+$/, "请输入有效的邮箱地址"),
-        username: z
-          .string()
-          .min(2, "用户名至少2个字符")
-          .max(50, "用户名最多50个字符")
-          .regex(/^[a-zA-Z0-9_\u4e00-\u9fa5]+$/, "用户名只能包含字母、数字、下划线和中文，不能包含空格"),
+        email: z.string().min(1, "请输入邮箱"),
+        username: z.string().min(2, "用户名至少2个字符").max(50, "用户名最多50个字符"),
         password: z.string().min(6, "密码至少6个字符"),
       }),
     )
