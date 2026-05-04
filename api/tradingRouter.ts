@@ -120,8 +120,8 @@ export const tradingRouter = createRouter({
 
   myHoldings: publicQuery.query(async ({ ctx }) => {
     if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
-    const { findHoldingsByUser } = await import("./queries/holdings");
-    const { findMovieById } = await import("./queries/movies");
+    const { findHoldingsByUser } = await import("./queries/holdings.js");
+    const { findMovieById } = await import("./queries/movies.js");
     const hs = await findHoldingsByUser(ctx.user.id);
     const result = [];
     for (const h of hs) {
@@ -144,7 +144,7 @@ export const tradingRouter = createRouter({
   myTransactions: publicQuery.query(async ({ ctx }) => {
     if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
     const txs = await findTransactionsByUser(ctx.user.id, 100);
-    const { findAllMovies } = await import("./queries/movies");
+    const { findAllMovies } = await import("./queries/movies.js");
     const movies = await findAllMovies();
     return txs.map((t) => ({
       id: t.id,

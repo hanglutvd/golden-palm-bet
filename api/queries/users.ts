@@ -53,7 +53,7 @@ export async function createUser(data: {
   username: string;
   passwordHash: string;
   balance?: string;
-  role?: string;
+  role?: "user" | "admin";
 }) {
   const [{ id }] = await getDb()
     .insert(users)
