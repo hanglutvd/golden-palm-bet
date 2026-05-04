@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import { trpc } from '@/providers/trpc';
 import { useAuth } from '@/hooks/useAuth';
+import { GameCoin } from '@/components/GameCoin';
 import { getMarketStatus, formatTimeRemaining } from '@contracts/market';
 import type { MovieQuote } from '@/types';
 

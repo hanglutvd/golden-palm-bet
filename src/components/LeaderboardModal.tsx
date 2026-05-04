@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { RefreshCw, Trophy, Medal, Award, X, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { trpc } from '@/providers/trpc';
+import { GameCoin } from '@/components/GameCoin';
 
 interface LeaderboardModalProps {
   open: boolean;

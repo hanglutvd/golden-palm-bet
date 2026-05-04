@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { RefreshCw, Trophy, Medal, Award, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { trpc } from '@/providers/trpc';
+import { GameCoin } from '@/components/GameCoin';
 
 interface LeaderboardProps {
   onOpenFull?: () => void;

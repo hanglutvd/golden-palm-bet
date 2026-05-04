@@ -1,6 +1,7 @@
 import { X, Wallet, TrendingUp, TrendingDown, Package, Clock, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { trpc } from "@/providers/trpc";
 import { useAuth } from "@/hooks/useAuth";
+import { GameCoin } from "@/components/GameCoin";
 
 interface PortfolioModalProps {
   open: boolean;

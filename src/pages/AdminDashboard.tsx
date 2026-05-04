@@ -4,6 +4,7 @@ import {
   RefreshCw, AlertTriangle
 } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
+import { GameCoin } from '@/components/GameCoin';
 
 export function AdminDashboard() {
   const { data: stats } = trpc.admin.stats.useQuery();

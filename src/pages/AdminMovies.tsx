@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2, Edit3, Check, X, CalendarDays } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
+import { GameCoin } from '@/components/GameCoin';
 
 export function AdminMovies() {
   const [newName, setNewName] = useState('');

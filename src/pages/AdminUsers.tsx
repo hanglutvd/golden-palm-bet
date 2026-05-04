@@ -1,5 +1,6 @@
 import { Users, Shield, ShieldOff } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
+import { GameCoin } from '@/components/GameCoin';
 
 export function AdminUsers() {
   const { data: userList } = trpc.admin.users.useQuery();
