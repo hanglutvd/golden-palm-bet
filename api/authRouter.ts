@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { createRouter, publicQuery } from "./middleware.js";
-import { findUserByEmailOrUsername, findUserById, findUserByEmail, findUserByResetToken, createUser, setResetToken, clearResetToken, updatePassword } from "./queries/users.js";
+import { findUserByEmailOrUsername, findUserById, findUserByEmail, findUserByResetToken, createUser, setResetToken, clearResetToken, updatePassword, countUsers } from "./queries/users.js";
 import { sendPasswordResetEmail } from "./lib/email.js";
 import { env } from "./lib/env.js";
 
@@ -49,11 +49,17 @@ export const authRouter = createRouter({
       }
 
       const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
+
+      // First user becomes admin
+      const userCount = await countUsers();
+      const role = userCount === 0 ? "admin" : "user";
+
       const user = await createUser({
         email: input.email,
         username: input.username,
         passwordHash,
         balance: "3000.00",
+        role,
       });
 
       if (!user) {

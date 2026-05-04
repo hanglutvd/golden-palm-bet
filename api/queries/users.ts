@@ -1,6 +1,6 @@
 import { getDb } from "./connection.js";
 import { users } from "../../db/schema.js";
-import { eq, or, and, gt } from "drizzle-orm";
+import { eq, or, and, gt, sql } from "drizzle-orm";
 
 export async function findUserById(id: number) {
   return getDb().query.users.findFirst({
@@ -43,11 +43,17 @@ export async function findUserByResetToken(token: string) {
     .then((rows) => rows[0] as typeof users.$inferSelect | undefined);
 }
 
+export async function countUsers() {
+  const result = await getDb().select({ count: sql`count(*)` }).from(users);
+  return Number(result[0]?.count ?? 0);
+}
+
 export async function createUser(data: {
   email: string;
   username: string;
   passwordHash: string;
   balance?: string;
+  role?: string;
 }) {
   const [{ id }] = await getDb()
     .insert(users)
