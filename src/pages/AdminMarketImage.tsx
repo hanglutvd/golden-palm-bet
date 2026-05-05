@@ -1,113 +1,191 @@
 import { useState, useRef } from 'react';
-import { Upload, Image as ImageIcon, Check } from 'lucide-react';
-import { publicUrl } from '@/lib/publicUrl';
+import { Upload, ImageIcon, Trash2, Save, Loader2 } from 'lucide-react';
+import { trpc } from '@/providers/trpc';
 
 export function AdminMarketImage() {
-  const [preview, setPreview] = useState<string | null>(null);
-  const [uploaded, setUploaded] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const utils = trpc.useUtils();
+  const { data: images } = trpc.config.getMarketImages.useQuery();
+  const saveMutation = trpc.config.setMarketImages.useMutation({
+    onSuccess: () => {
+      utils.config.getMarketImages.invalidate();
+      setFiles([null, null, null]);
+      setPreviews([null, null, null]);
+      alert('行情图片已保存');
+    },
+    onError: (err) => {
+      alert(err.message || '保存失败');
+    },
+  });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const [files, setFiles] = useState<(File | null)[]>([null, null, null]);
+  const [previews, setPreviews] = useState<(string | null)[]>([null, null, null]);
+  const [uploading, setUploading] = useState(false);
+  const inputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+
+  const labels = [
+    'Screen Daily 场刊评分表',
+    '华语媒体场刊评分表',
+    '陀螺电影场刊评分表',
+  ];
+
+  const handleFileChange = (index: number, file: File | null) => {
     if (!file) return;
+    const nextFiles = [...files];
+    nextFiles[index] = file;
+    setFiles(nextFiles);
 
     const reader = new FileReader();
-    reader.onload = (event) => {
-      setPreview(event.target?.result as string);
+    reader.onload = (e) => {
+      const nextPreviews = [...previews];
+      nextPreviews[index] = e.target?.result as string;
+      setPreviews(nextPreviews);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleUpload = () => {
-    // In static deployment, we can't actually save files server-side
-    // This would work with a real backend file upload endpoint
-    // For now, show success and instruct the user
-    setUploaded(true);
-    setTimeout(() => setUploaded(false), 3000);
+  const handleRemove = (index: number) => {
+    const nextFiles = [...files];
+    nextFiles[index] = null;
+    setFiles(nextFiles);
+
+    const nextPreviews = [...previews];
+    nextPreviews[index] = null;
+    setPreviews(nextPreviews);
   };
+
+  const handleSave = async () => {
+    setUploading(true);
+    try {
+      const uploadedUrls: (string | undefined)[] = [];
+
+      for (let i = 0; i < 3; i++) {
+        if (files[i]) {
+          const formData = new FormData();
+          formData.append('file', files[i]);
+
+          const res = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || `图片 ${i + 1} 上传失败`);
+          }
+
+          const { url } = await res.json();
+          uploadedUrls[i] = url;
+        } else if (images?.[i]) {
+          uploadedUrls[i] = images[i];
+        }
+      }
+
+      saveMutation.mutate({
+        images: uploadedUrls.filter((u): u is string => !!u),
+      });
+    } catch (err: any) {
+      alert(err.message || '保存失败');
+      setUploading(false);
+    }
+  };
+
+  const hasChanges = files.some(Boolean);
+  const hasImages = images && images.some(Boolean);
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-foreground">行情图片管理</h1>
 
-      <div className="rounded-lg bg-app-card border border-app-border p-4 space-y-4">
+      <div className="rounded-lg bg-app-card border border-app-border p-4 space-y-5">
         <p className="text-sm text-muted-foreground">
-          上传新的行情数据表格图片，将替换首页「行情中心」预览区域显示的图片。
+          直接上传场刊评分表图片（JPG/PNG/WEBP，单张不超过 5MB）。
+          首页「行情中心」将显示这些图片。
         </p>
 
-        {/* Current image */}
-        <div>
-          <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">当前图片</p>
-          <div className="rounded-md border border-app-border overflow-hidden w-full max-w-md">
-            <img
-              src={publicUrl("market-chart.png")}
-              alt="当前行情图片"
-              className="w-full h-auto"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Upload */}
-        <div>
-          <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">上传新图片</p>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-
-          {preview ? (
-            <div className="space-y-3">
-              <div className="rounded-md border border-app-border overflow-hidden w-full max-w-md">
-                <img src={preview} alt="预览" className="w-full h-auto" />
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleUpload}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-app-gold text-white text-sm font-medium hover:bg-app-gold/80 transition-colors"
-                >
-                  <Upload className="h-4 w-4" />
-                  确认替换
-                </button>
-                <button
-                  onClick={() => {
-                    setPreview(null);
-                    if (fileRef.current) fileRef.current.value = '';
-                  }}
-                  className="px-4 py-2 rounded-md border border-app-border text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  取消
-                </button>
-                {uploaded && (
-                  <span className="flex items-center gap-1 text-xs text-app-green">
-                    <Check className="h-3.5 w-3.5" />
-                    已替换（刷新页面生效）
-                  </span>
-                )}
-              </div>
+        {labels.map((label, i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-app-gold" />
+              <span className="text-sm font-medium text-foreground">{label}</span>
+              {images?.[i] && !previews[i] && !files[i] && (
+                <span className="text-xs text-green-500 ml-auto">已有图片</span>
+              )}
             </div>
-          ) : (
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="flex flex-col items-center gap-2 w-full max-w-md py-8 rounded-md border-2 border-dashed border-app-border bg-app-bg/40 hover:bg-app-hover hover:border-app-gold transition-colors"
-            >
-              <ImageIcon className="h-8 w-8 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">点击选择图片</span>
-              <span className="text-xs text-muted-foreground">支持 JPG、PNG 格式</span>
-            </button>
-          )}
-        </div>
 
-        {/* Note */}
-        <div className="rounded-md bg-app-gold/5 border border-app-gold/10 px-3 py-2">
-          <p className="text-xs text-app-gold leading-relaxed">
-            <strong>提示：</strong>静态部署环境下，图片需要通过服务器文件系统替换。实际生产环境建议对接云存储（如阿里云 OSS、腾讯云 COS）实现真正的文件上传功能。
-          </p>
+            {/* Preview area */}
+            <div className="relative rounded-md border border-app-border bg-app-bg overflow-hidden">
+              {previews[i] ? (
+                <div className="relative">
+                  <img src={previews[i]!} alt={label} className="w-full h-48 object-contain" />
+                  <button
+                    onClick={() => handleRemove(i)}
+                    className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : images?.[i] ? (
+                <div className="relative">
+                  <img src={images[i]} alt={label} className="w-full h-48 object-contain" />
+                  <button
+                    onClick={() => handleRemove(i)}
+                    className="absolute top-2 right-2 p-1.5 rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  <div className="absolute bottom-2 left-2 text-xs text-white bg-black/60 px-2 py-0.5 rounded">
+                    当前图片
+                  </div>
+                </div>
+              ) : (
+                <div
+                  onClick={() => inputRefs[i].current?.click()}
+                  className="flex flex-col items-center justify-center h-48 cursor-pointer hover:bg-app-hover transition-colors"
+                >
+                  <Upload className="h-8 w-8 text-muted-foreground/50 mb-2" />
+                  <span className="text-xs text-muted-foreground">点击上传图片</span>
+                </div>
+              )}
+            </div>
+
+            <input
+              ref={inputRefs[i]}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(i, e.target.files?.[0] || null)}
+              className="hidden"
+            />
+
+            {previews[i] && (
+              <button
+                onClick={() => inputRefs[i].current?.click()}
+                className="text-xs text-app-gold hover:text-app-gold/80 transition-colors"
+              >
+                重新选择
+              </button>
+            )}
+          </div>
+        ))}
+
+        {/* Save button */}
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            onClick={handleSave}
+            disabled={uploading || (!hasChanges && !hasImages)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-app-gold text-white text-sm font-medium hover:bg-app-gold/80 transition-colors disabled:opacity-50"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                上传中...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                保存
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>
