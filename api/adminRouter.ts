@@ -88,11 +88,11 @@ export const adminRouter = createRouter({
     }),
 
   updateMoviePremiere: adminQuery
-    .input(z.object({ id: z.number(), premiereDate: z.string().max(50) }))
+    .input(z.object({ id: z.number(), premiereDate: z.string().max(50).optional() }))
     .mutation(async ({ input }) => {
       await getDb()
         .update(movies)
-        .set({ premiereDate: input.premiereDate })
+        .set({ premiereDate: input.premiereDate || null })
         .where(eq(movies.id, input.id));
       return { success: true };
     }),

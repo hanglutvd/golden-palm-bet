@@ -56,9 +56,10 @@ export function AdminMovies() {
       updatePriceMutation.mutate({ id, price });
     }
     // Save premiere date
+    const premiereValue = editPremiere.trim() || undefined;
     updatePremiereMutation.mutate({
       id,
-      premiereDate: editPremiere,
+      premiereDate: premiereValue,
     });
   };
 
