@@ -34,7 +34,13 @@ export function AdminMovies() {
   });
 
   const updatePremiereMutation = trpc.admin.updateMoviePremiere.useMutation({
-    onSuccess: () => utils.movie.list.invalidate(),
+    onSuccess: () => {
+      utils.movie.list.invalidate();
+      setEditingId(null);
+    },
+    onError: (err) => {
+      alert('首映时间保存失败：' + err.message);
+    },
   });
 
   const startEdit = (m: typeof movies extends (infer T)[] ? T : never) => {
@@ -44,12 +50,16 @@ export function AdminMovies() {
   };
 
   const saveEdit = (id: number) => {
+    // Save price
     const price = parseFloat(editPrice);
     if (!isNaN(price) && price > 0) {
       updatePriceMutation.mutate({ id, price });
     }
-    updatePremiereMutation.mutate({ id, premiereDate: editPremiere });
-    setEditingId(null);
+    // Save premiere date
+    updatePremiereMutation.mutate({
+      id,
+      premiereDate: editPremiere,
+    });
   };
 
   return (
