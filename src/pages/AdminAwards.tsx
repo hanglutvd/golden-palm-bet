@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Trophy, CheckCircle, AlertTriangle, Plus, X } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 
 const AWARD_CONFIG = [
@@ -14,7 +14,7 @@ const AWARD_CONFIG = [
 ];
 
 export function AdminAwards() {
-  const [winners, setWinners] = useState<Record<string, number>>({});
+  const [winners, setWinners] = useState<Record<string, number[]>>({});
   const [confirming, setConfirming] = useState(false);
 
   const utils = trpc.useUtils();
@@ -24,18 +24,41 @@ export function AdminAwards() {
     onSuccess: (data) => {
       utils.invalidate();
       setConfirming(false);
-      alert(`开奖完成！共向 ${data.results.length} 个奖项的持股用户发放了分红。`);
+      const totalAwards = data.results.length;
+      const totalMovies = data.results.reduce((sum, r) => sum + (r.movieIds?.length || 0), 0);
+      alert(`开奖完成！共 ${totalAwards} 个奖项，${totalMovies} 部获奖影片，分红已发放。`);
     },
   });
 
+  const addMovieToAward = (awardName: string, movieId: number) => {
+    setWinners((prev) => {
+      const current = prev[awardName] || [];
+      if (current.includes(movieId)) return prev;
+      return { ...prev, [awardName]: [...current, movieId] };
+    });
+  };
+
+  const removeMovieFromAward = (awardName: string, index: number) => {
+    setWinners((prev) => {
+      const current = [...(prev[awardName] || [])];
+      current.splice(index, 1);
+      if (current.length === 0) {
+        const next = { ...prev };
+        delete next[awardName];
+        return next;
+      }
+      return { ...prev, [awardName]: current };
+    });
+  };
+
   const handleSetWinners = () => {
     const payload = Object.entries(winners)
-      .filter(([_, movieId]) => movieId > 0)
-      .map(([awardName, movieId]) => {
+      .filter(([_, movieIds]) => movieIds.length > 0)
+      .map(([awardName, movieIds]) => {
         const config = AWARD_CONFIG.find((a) => a.name === awardName);
         return {
           awardName,
-          movieId,
+          movieIds,
           dividend: config?.dividend || 100,
         };
       });
@@ -62,37 +85,69 @@ export function AdminAwards() {
 
       {/* Award selection */}
       <div className="rounded-lg bg-app-card border border-app-border overflow-hidden">
-        <div className="grid grid-cols-[1fr,1fr,auto] gap-4 px-4 py-2.5 border-b border-app-border bg-app-bg/60">
+        <div className="grid grid-cols-[1fr,1.5fr,auto] gap-4 px-4 py-2.5 border-b border-app-border bg-app-bg/60">
           <span className="text-xs font-semibold uppercase text-muted-foreground">奖项</span>
-          <span className="text-xs font-semibold uppercase text-muted-foreground">获奖影片</span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">获奖影片（可多选）</span>
           <span className="text-xs font-semibold uppercase text-muted-foreground text-right">每股分红</span>
         </div>
         <div className="divide-y divide-app-border/40">
-          {AWARD_CONFIG.map((award) => (
-            <div key={award.name} className="grid grid-cols-[1fr,1fr,auto] gap-4 items-center px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-app-gold" />
-                <span className="text-sm font-medium text-foreground">{award.name}</span>
+          {AWARD_CONFIG.map((award) => {
+            const selectedMovies = winners[award.name] || [];
+            return (
+              <div key={award.name} className="grid grid-cols-[1fr,1.5fr,auto] gap-4 items-start px-4 py-3">
+                <div className="flex items-center gap-2 pt-1">
+                  <Trophy className="h-4 w-4 text-app-gold" />
+                  <span className="text-sm font-medium text-foreground">{award.name}</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  {/* Selected movie tags */}
+                  {selectedMovies.map((movieId, idx) => {
+                    const movie = movies?.find((m) => m.id === movieId);
+                    return (
+                      <div key={idx} className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 rounded-md bg-app-gold/10 text-app-gold px-2 py-1 text-xs">
+                          {movie?.name || '未知影片'}
+                          <button
+                            onClick={() => removeMovieFromAward(award.name, idx)}
+                            className="hover:text-app-red transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {/* Add movie selector */}
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const id = parseInt(e.target.value);
+                        if (id > 0) {
+                          addMovieToAward(award.name, id);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="rounded-md border border-app-border bg-app-bg px-2 py-1.5 text-sm text-foreground focus:border-app-gold focus:outline-none"
+                    >
+                      <option value="">+ 添加获奖影片</option>
+                      {movies?.map((m) => (
+                        <option key={m.id} value={m.id} disabled={selectedMovies.includes(m.id)}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <span className="text-sm font-semibold tabular-nums text-app-gold text-right pt-1">
+                  {award.dividend}
+                </span>
               </div>
-              <select
-                value={winners[award.name] || ''}
-                onChange={(e) =>
-                  setWinners((prev) => ({ ...prev, [award.name]: parseInt(e.target.value) || 0 }))
-                }
-                className="rounded-md border border-app-border bg-app-bg px-2 py-1.5 text-sm text-foreground focus:border-app-gold focus:outline-none"
-              >
-                <option value="">请选择获奖影片</option>
-                {movies?.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-              <span className="text-sm font-semibold tabular-nums text-app-gold text-right">
-                {award.dividend}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

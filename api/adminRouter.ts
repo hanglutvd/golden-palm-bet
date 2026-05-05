@@ -104,7 +104,7 @@ export const adminRouter = createRouter({
         winners: z.array(
           z.object({
             awardName: z.string(),
-            movieId: z.number(),
+            movieIds: z.array(z.number()),
             dividend: z.number(),
           }),
         ),
@@ -115,32 +115,39 @@ export const adminRouter = createRouter({
       const results = [];
 
       for (const w of input.winners) {
-        // Find all holders of this movie
-        const movieHolders = await db.query.holdings.findMany({
-          where: eq(holdings.movieId, w.movieId),
-        });
+        let totalHoldersPaid = 0;
+        const paidUserIds = new Set<number>();
 
-        for (const h of movieHolders) {
-          const dividend = w.dividend * h.quantity;
-          // Add dividend to user's balance
-          const user = await db.query.users.findFirst({
-            where: eq(users.id, h.userId),
+        for (const movieId of w.movieIds) {
+          const movieHolders = await db.query.holdings.findMany({
+            where: eq(holdings.movieId, movieId),
           });
-          if (user) {
-            await db
-              .update(users)
-              .set({
-                balance: String((Number(user.balance) + dividend).toFixed(2)),
-              })
-              .where(eq(users.id, h.userId));
+
+          for (const h of movieHolders) {
+            const dividend = w.dividend * h.quantity;
+            const user = await db.query.users.findFirst({
+              where: eq(users.id, h.userId),
+            });
+            if (user) {
+              await db
+                .update(users)
+                .set({
+                  balance: String((Number(user.balance) + dividend).toFixed(2)),
+                })
+                .where(eq(users.id, h.userId));
+              paidUserIds.add(user.id);
+            }
           }
+
+          totalHoldersPaid += movieHolders.length;
         }
 
         results.push({
           award: w.awardName,
-          movieId: w.movieId,
+          movieIds: w.movieIds,
           dividend: w.dividend,
-          holdersPaid: movieHolders.length,
+          holdersPaid: totalHoldersPaid,
+          uniqueUsersPaid: paidUserIds.size,
         });
       }
 
@@ -154,6 +161,8 @@ export const adminRouter = createRouter({
         title: z.string().min(1).max(200),
         summary: z.string().max(500).optional(),
         coverImage: z.string().max(500).optional(),
+        coverImage2: z.string().max(500).optional(),
+        coverImage3: z.string().max(500).optional(),
         externalUrl: z.string().max(500).optional(),
       }),
     )
@@ -164,6 +173,8 @@ export const adminRouter = createRouter({
           title: input.title,
           summary: input.summary || null,
           coverImage: input.coverImage || null,
+          coverImage2: input.coverImage2 || null,
+          coverImage3: input.coverImage3 || null,
           externalUrl: input.externalUrl || null,
         })
         .$returningId();
