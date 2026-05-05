@@ -8,9 +8,13 @@ import { createContext } from "./context.js";
 import { env } from "./lib/env.js";
 import { initDatabase } from "./init-db.js";
 import { serveStaticFiles } from "./lib/vite.js";
+import { startBackupSchedule } from "./backup.js";
 
 // Initialize SQLite database (create tables, seed data)
 initDatabase();
+
+// Start daily backup at 04:00 (keeps last 7 copies)
+startBackupSchedule();
 
 const app = new Hono<{ Bindings: HttpBindings }>();
 
