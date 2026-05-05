@@ -14,6 +14,7 @@ import { MarketPreview } from './components/MarketPreview';
 import { PortfolioModal } from './components/PortfolioModal';
 import { PrizesModal } from './components/PrizesModal';
 import { UserPortfolioPreview } from './components/UserPortfolioPreview';
+import { AwardResults } from './components/AwardResults';
 import { AdminShell } from './components/AdminShell';
 import { AuthProvider } from './hooks/useAuth';
 
@@ -49,6 +50,7 @@ function HomePage({ onEnterAdmin }: { onEnterAdmin: () => void }) {
           <div className="lg:w-[36%] flex flex-col gap-6">
             <UserPortfolioPreview onOpenFull={() => setPortfolioOpen(true)} />
             <MarketPreview onOpenFull={() => setMarketOpen(true)} />
+            <AwardResults />
             <Leaderboard onOpenFull={() => setLeaderboardOpen(true)} />
           </div>
         </div>
