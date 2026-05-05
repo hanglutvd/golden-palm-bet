@@ -17,7 +17,7 @@ export function AdminDashboard() {
     onSuccess: () => {
       utils.invalidate();
       setConfirming(false);
-      alert('所有电影价格已重置为 100，持股记录已清空');
+      alert('内测数据已重置：\n- 所有用户余额恢复为 ¥3000\n- 所有电影价格恢复为 100\n- 所有持仓和交易记录已清空');
     },
   });
 
@@ -81,11 +81,11 @@ export function AdminDashboard() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-app-red" />
-            <span className="text-sm font-medium text-foreground">重置市场</span>
+            <span className="text-sm font-medium text-foreground">内测数据重置</span>
           </div>
           {confirming ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-app-red">确认重置？所有价格和持股将清空</span>
+              <span className="text-xs text-app-red">确认重置？余额、价格、持仓和交易记录将全部清空</span>
               <button
                 onClick={() => resetMutation.mutate()}
                 disabled={resetMutation.isPending}
@@ -106,7 +106,7 @@ export function AdminDashboard() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-app-border text-xs text-muted-foreground hover:text-app-red hover:border-app-red transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5" />
-              重置所有价格
+              重置内测数据
             </button>
           )}
         </div>

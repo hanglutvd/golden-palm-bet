@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { createRouter, adminQuery } from "./middleware.js";
 import { getDb } from "./queries/connection.js";
-import { movies, users, diaries, holdings } from "../db/schema.js";
+import { movies, users, diaries, holdings, transactions } from "../db/schema.js";
 import { eq, desc } from "drizzle-orm";
+import { getBeijingDateStr } from "../contracts/market.js";
 
 export const adminRouter = createRouter({
   // Dashboard stats
@@ -176,18 +177,37 @@ export const adminRouter = createRouter({
       return { success: true };
     }),
 
-  // Reset all movie prices to 100
+  // Reset all data for a new round (beta test reset)
   resetPrices: adminQuery.mutation(async () => {
     const db = getDb();
+
+    // 1. Reset all movie prices to 100, clear volumes
     const allMovies = await db.select().from(movies);
+    const today = getBeijingDateStr();
     for (const m of allMovies) {
       await db
         .update(movies)
-        .set({ currentPrice: "100.00", totalVolume: "0" })
+        .set({
+          currentPrice: "100.00",
+          basePrice: "100.00",
+          totalVolume: "0",
+          dailyNetVolume: 0,
+          lastOpenDate: today,
+        })
         .where(eq(movies.id, m.id));
     }
-    // Also clear all holdings
+
+    // 2. Clear all user holdings
     await db.delete(holdings);
-    return { success: true };
+
+    // 3. Clear all transaction records
+    await db.delete(transactions);
+
+    // 4. Reset all user balances to 3000
+    await db
+      .update(users)
+      .set({ balance: "3000.00" });
+
+    return { success: true, resetCount: allMovies.length };
   }),
 });
