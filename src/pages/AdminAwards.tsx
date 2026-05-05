@@ -84,7 +84,8 @@ export function AdminAwards() {
       </div>
 
       {/* Award selection */}
-      <div className="rounded-lg bg-app-card border border-app-border overflow-hidden">
+      <div className="rounded-lg bg-app-card border border-app-border overflow-x-auto">
+        <div className="min-w-[500px]">
         <div className="grid grid-cols-[1fr,1.5fr,auto] gap-4 px-4 py-2.5 border-b border-app-border bg-app-bg/60">
           <span className="text-xs font-semibold uppercase text-muted-foreground">奖项</span>
           <span className="text-xs font-semibold uppercase text-muted-foreground">获奖影片（可多选）</span>
@@ -148,6 +149,7 @@ export function AdminAwards() {
               </div>
             );
           })}
+        </div>
         </div>
       </div>
 

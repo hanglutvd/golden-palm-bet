@@ -6,6 +6,8 @@ export function AdminDiaries() {
   const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [coverImage2, setCoverImage2] = useState('');
+  const [coverImage3, setCoverImage3] = useState('');
   const [externalUrl, setExternalUrl] = useState('');
 
   const utils = trpc.useUtils();
@@ -18,6 +20,8 @@ export function AdminDiaries() {
       setTitle('');
       setSummary('');
       setCoverImage('');
+      setCoverImage2('');
+      setCoverImage3('');
       setExternalUrl('');
     },
   });
@@ -54,7 +58,19 @@ export function AdminDiaries() {
         <input
           value={coverImage}
           onChange={(e) => setCoverImage(e.target.value)}
-          placeholder="封面图 URL（可选）"
+          placeholder="封面图 1：Screen Daily 场刊评分表 URL"
+          className="w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-foreground focus:border-app-gold focus:outline-none"
+        />
+        <input
+          value={coverImage2}
+          onChange={(e) => setCoverImage2(e.target.value)}
+          placeholder="封面图 2：华语媒体场刊评分表 URL（可选）"
+          className="w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-foreground focus:border-app-gold focus:outline-none"
+        />
+        <input
+          value={coverImage3}
+          onChange={(e) => setCoverImage3(e.target.value)}
+          placeholder="封面图 3：陀螺电影场刊评分表 URL（可选）"
           className="w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-foreground focus:border-app-gold focus:outline-none"
         />
         <input
@@ -70,6 +86,8 @@ export function AdminDiaries() {
                 title: title.trim(),
                 summary: summary.trim() || undefined,
                 coverImage: coverImage.trim() || undefined,
+                coverImage2: coverImage2.trim() || undefined,
+                coverImage3: coverImage3.trim() || undefined,
                 externalUrl: externalUrl.trim() || undefined,
               });
             }
@@ -83,7 +101,8 @@ export function AdminDiaries() {
       </div>
 
       {/* List */}
-      <div className="rounded-lg bg-app-card border border-app-border overflow-hidden">
+      <div className="rounded-lg bg-app-card border border-app-border overflow-x-auto">
+        <div className="min-w-[400px]">
         <div className="grid grid-cols-[1fr,auto,auto] gap-3 px-4 py-2.5 border-b border-app-border bg-app-bg/60">
           <span className="text-xs font-semibold uppercase text-muted-foreground">标题</span>
           <span className="text-xs font-semibold uppercase text-muted-foreground">日期</span>
@@ -129,6 +148,7 @@ export function AdminDiaries() {
               暂无文章
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

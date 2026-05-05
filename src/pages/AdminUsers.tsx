@@ -14,7 +14,8 @@ export function AdminUsers() {
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-foreground">用户管理</h1>
 
-      <div className="rounded-lg bg-app-card border border-app-border overflow-hidden">
+      <div className="rounded-lg bg-app-card border border-app-border overflow-x-auto">
+        <div className="min-w-[600px]">
         <div className="grid grid-cols-[auto,1fr,1fr,auto,auto,auto] gap-3 px-4 py-2.5 border-b border-app-border bg-app-bg/60">
           <span className="text-xs font-semibold uppercase text-muted-foreground w-8">ID</span>
           <span className="text-xs font-semibold uppercase text-muted-foreground">用户名</span>
@@ -77,6 +78,7 @@ export function AdminUsers() {
               暂无用户
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

@@ -92,7 +92,8 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
                 <p className="text-xs text-muted-foreground mt-1">在行情页面买入电影股票即可开始投资</p>
               </div>
             ) : (
-              <div className="rounded-lg border border-app-border overflow-hidden">
+              <div className="rounded-lg border border-app-border overflow-x-auto">
+                <div className="min-w-[480px]">
                 {/* Fixed column widths for proper alignment */}
                 <div className="grid grid-cols-[1.5fr_60px_80px_80px_120px] gap-x-4 gap-y-0 px-4 py-2 bg-app-bg/60 border-b border-app-border">
                   <span className="text-xs font-semibold text-muted-foreground">电影</span>
@@ -118,6 +119,7 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
                     </div>
                   ))}
                 </div>
+                </div>
               </div>
             )}
           </div>
@@ -134,7 +136,8 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
                 <p className="text-sm text-muted-foreground">暂无交易记录</p>
               </div>
             ) : (
-              <div className="rounded-lg border border-app-border overflow-hidden">
+              <div className="rounded-lg border border-app-border overflow-x-auto">
+                <div className="min-w-[420px]">
                 <div className="grid grid-cols-[80px_1fr_60px_90px_100px] gap-x-4 gap-y-0 px-4 py-2 bg-app-bg/60 border-b border-app-border">
                   <span className="text-xs font-semibold text-muted-foreground">类型</span>
                   <span className="text-xs font-semibold text-muted-foreground">电影</span>
@@ -157,6 +160,7 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
                       </span>
                     </div>
                   ))}
+                </div>
                 </div>
               </div>
             )}

@@ -99,7 +99,8 @@ export function AdminMovies() {
       </div>
 
       {/* Movie list */}
-      <div className="rounded-lg bg-app-card border border-app-border overflow-hidden">
+      <div className="rounded-lg bg-app-card border border-app-border overflow-x-auto">
+        <div className="min-w-[640px]">
         <div className="grid grid-cols-[auto,1fr,1fr,1fr,auto,auto] gap-3 px-4 py-2.5 border-b border-app-border bg-app-bg/60">
           <span className="text-xs font-semibold uppercase text-muted-foreground w-10">排名</span>
           <span className="text-xs font-semibold uppercase text-muted-foreground">电影名称</span>
@@ -188,6 +189,7 @@ export function AdminMovies() {
               </div>
             </div>
           ))}
+        </div>
         </div>
       </div>
     </div>
