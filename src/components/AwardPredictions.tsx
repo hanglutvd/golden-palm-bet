@@ -12,11 +12,12 @@ interface AwardResult {
 const awardsData: AwardResult[] = [
   { name: '金棕榈奖', dividend: 500.00, predictedWinner: '盒子里的羊' },
   { name: '评审团大奖', dividend: 200.00, predictedWinner: '平行故事' },
-  { name: '评审团奖', dividend: 100.00, predictedWinner: '苦涩的圣诞节' },
+  { name: '最佳导演', dividend: 150.00, predictedWinner: '是枝裕和' },
   { name: '最佳男演员', dividend: 100.00, predictedWinner: '塞巴斯蒂安·斯坦' },
   { name: '最佳女演员', dividend: 100.00, predictedWinner: '桑德拉·惠勒' },
-  { name: '最佳导演', dividend: 100.00, predictedWinner: '是枝裕和' },
   { name: '最佳编剧', dividend: 100.00, predictedWinner: '阿斯加·法哈蒂' },
+  { name: '评审团奖', dividend: 100.00, predictedWinner: '苦涩的圣诞节' },
+  { name: '特别奖（若有）', dividend: 50.00, predictedWinner: '待定' },
 ];
 
 export function AwardPredictions() {

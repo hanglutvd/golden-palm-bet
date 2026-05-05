@@ -138,11 +138,11 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
               {[
                 { name: '金棕榈奖', dividend: 500.00, highlight: true },
                 { name: '评审团大奖', dividend: 200.00, highlight: false },
-                { name: '评审团奖', dividend: 100.00, highlight: false },
+                { name: '最佳导演', dividend: 150.00, highlight: false },
                 { name: '最佳男演员 / 最佳女演员', dividend: 100.00, highlight: false },
-                { name: '最佳导演奖', dividend: 100.00, highlight: false },
-                { name: '最佳编剧奖', dividend: 100.00, highlight: false },
-                { name: '特别奖 / 其他奖项', dividend: 100.00, highlight: false },
+                { name: '最佳编剧', dividend: 100.00, highlight: false },
+                { name: '评审团奖', dividend: 100.00, highlight: false },
+                { name: '特别奖（若有）', dividend: 50.00, highlight: false },
               ].map((item, index) => (
                 <div
                   key={index}
