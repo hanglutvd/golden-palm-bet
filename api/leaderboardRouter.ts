@@ -13,8 +13,7 @@ export const leaderboardRouter = createRouter({
         balance: users.balance,
       })
       .from(users)
-      .orderBy(desc(sql`${users.balance} + 0`))
-      .limit(10);
+      .orderBy(desc(sql`${users.balance} + 0`));
 
     return topUsers.map((u, idx) => ({
       rank: idx + 1,

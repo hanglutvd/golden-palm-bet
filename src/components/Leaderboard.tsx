@@ -36,7 +36,7 @@ export function Leaderboard({ onOpenFull }: LeaderboardProps) {
     }
   };
 
-  const displayEntries = entries || [];
+  const displayEntries = (entries || []).slice(0, 10);
 
   return (
     <div className="rounded-lg bg-app-card overflow-hidden">
