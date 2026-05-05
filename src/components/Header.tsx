@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Menu, X, LogOut, User, Shield } from 'lucide-react';
+import { Menu, X, LogOut, User, Shield, Share2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from './GameCoin';
+import { PalmLogoSVG } from '@/lib/imageAssets';
 
 interface HeaderProps {
   onOpenRules: () => void;
@@ -11,9 +12,10 @@ interface HeaderProps {
   onOpenPrizes: () => void;
   onOpenPortfolio?: () => void;
   onEnterAdmin: () => void;
+  onOpenShare: () => void;
 }
 
-export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarket, onOpenPrizes, onOpenPortfolio, onEnterAdmin }: HeaderProps) {
+export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarket, onOpenPrizes, onOpenPortfolio, onEnterAdmin, onOpenShare }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
 
@@ -31,7 +33,7 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
         {/* Logo */}
         <div className="flex items-center gap-2.5">
           <img
-            src="/images/palm-logo.png"
+            src={PalmLogoSVG}
             alt="金棕榈"
             className="h-8 w-auto object-contain"
           />
@@ -76,6 +78,14 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
 
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
+              {/* Share button */}
+              <button
+                onClick={onOpenShare}
+                className="flex items-center gap-1 rounded-md border border-app-gold/20 px-2.5 py-1 text-xs font-medium text-app-gold hover:bg-app-gold/10 transition-colors"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                分享
+              </button>
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-1.5 text-sm text-foreground">
                   <User className="h-4 w-4 text-app-gold" />
@@ -103,12 +113,21 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
               </button>
             </div>
           ) : (
-            <button
-              onClick={onOpenAuth}
-              className="rounded-md bg-app-gold px-4 py-1.5 text-sm font-medium text-white transition-all duration-200 hover:bg-app-gold/80 hover:shadow-[0_2px_8px_rgba(201,168,76,0.3)]"
-            >
-              登录
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onOpenShare}
+                className="flex items-center gap-1 rounded-md border border-app-gold/20 px-2.5 py-1.5 text-xs font-medium text-app-gold hover:bg-app-gold/10 transition-colors"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                分享
+              </button>
+              <button
+                onClick={onOpenAuth}
+                className="rounded-md bg-app-gold px-4 py-1.5 text-sm font-medium text-white transition-all duration-200 hover:bg-app-gold/80 hover:shadow-[0_2px_8px_rgba(201,168,76,0.3)]"
+              >
+                登录
+              </button>
+            </div>
           )}
         </nav>
 
@@ -154,6 +173,17 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
                     <span className="text-xs text-app-gold">(管理员)</span>
                   )}
                 </div>
+                {/* Mobile share button */}
+                <button
+                  onClick={() => {
+                    onOpenShare();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-1 rounded-md border border-app-gold/20 px-3 py-2 text-xs font-medium text-app-gold hover:bg-app-gold/10 transition-colors w-fit"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  分享给好友
+                </button>
                 {user.role === 'admin' && (
                   <button
                     onClick={() => {
@@ -178,15 +208,27 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => {
-                  onOpenAuth();
-                  setMobileMenuOpen(false);
-                }}
-                className="mt-1 w-full rounded-md bg-app-gold px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-app-gold/80"
-              >
-                登录
-              </button>
+              <div className="flex flex-col gap-2 pt-2 border-t border-app-border">
+                <button
+                  onClick={() => {
+                    onOpenShare();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-1 rounded-md border border-app-gold/20 px-3 py-2 text-xs font-medium text-app-gold hover:bg-app-gold/10 transition-colors w-fit"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  分享给好友
+                </button>
+                <button
+                  onClick={() => {
+                    onOpenAuth();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="mt-1 w-full rounded-md bg-app-gold px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-app-gold/80"
+                >
+                  登录
+                </button>
+              </div>
             )}
           </nav>
         </div>
