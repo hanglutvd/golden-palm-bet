@@ -1,28 +1,26 @@
 export function PromoBanner() {
   return (
-    <div 
-      className="rounded-lg overflow-hidden group cursor-pointer relative"
+    <div
+      className="relative rounded-lg overflow-hidden group cursor-pointer"
       style={{
-        background: 'linear-gradient(135deg, #0a1628 0%, #1a1a2e 40%, #16213e 70%, #0f3460 100%)',
+        backgroundImage: `url('https://i.imgs.ovh/2026/05/05/1cdaf9ae033de79458798bdf9f3b2ac2.jpg')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
       }}
     >
-      <div className="px-6 py-8 md:py-10 text-center relative">
-        {/* Decorative elements */}
-        <div className="absolute top-3 left-4 w-16 h-16 rounded-full bg-app-gold/5 blur-xl" />
-        <div className="absolute bottom-3 right-4 w-20 h-20 rounded-full bg-app-gold/5 blur-xl" />
-        
-        <p className="text-xs text-app-gold/80 font-medium tracking-widest uppercase mb-2 relative">
+      {/* Dark overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+      <div className="relative px-6 py-10 md:py-14 text-center">
+        <p className="text-xs text-app-gold/90 font-medium tracking-widest uppercase mb-2">
           第 79 届戛纳国际电影节
         </p>
-        <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2 relative">
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg">
           金棕榈竞猜
         </h2>
-        <p className="text-sm text-muted-foreground relative">
+        <p className="text-sm text-white/80">
           2026.05.12 - 05.23 · 法国戛纳
         </p>
-        
-        {/* Gold line accent */}
-        <div className="mt-4 mx-auto w-16 h-0.5 bg-gradient-to-r from-transparent via-app-gold/60 to-transparent" />
       </div>
     </div>
   );

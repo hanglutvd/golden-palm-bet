@@ -53,9 +53,17 @@ export function MarketPreview({ onOpenFull }: MarketPreviewProps) {
             </div>
           </div>
         ) : (
-          <div className="w-full h-32 rounded-md bg-app-bg flex flex-col items-center justify-center border border-app-border/60 gap-2">
-            <BarChart3 className="h-8 w-8 text-muted-foreground/40" />
-            <p className="text-xs text-muted-foreground">暂无行情图片</p>
+          <div className="relative w-full h-32 rounded-md overflow-hidden bg-app-bg border border-app-border/60">
+            <img
+              src="https://i.imgs.ovh/2026/05/05/ad2e95910f1a23bc7477a8da08b4c3d6.jpg"
+              alt="场刊评分表"
+              className="w-full h-full object-cover object-top opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs text-white font-medium px-3 py-1.5 rounded-md bg-black/50 backdrop-blur-sm">
+                暂无行情数据
+              </span>
+            </div>
           </div>
         )}
         <p className="text-xs text-muted-foreground mt-2 text-center">

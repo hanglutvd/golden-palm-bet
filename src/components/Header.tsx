@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Menu, X, LogOut, User, Shield, Share2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from './GameCoin';
-import { PalmLogoSVG } from '@/lib/imageAssets';
 
 interface HeaderProps {
   onOpenRules: () => void;
@@ -33,7 +32,7 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
         {/* Logo */}
         <div className="flex items-center gap-2.5">
           <img
-            src={PalmLogoSVG}
+            src="https://i.imgs.ovh/2026/05/05/2cac6253d3fed931741b9c887cee2343.png"
             alt="金棕榈"
             className="h-8 w-auto object-contain"
           />
