@@ -25,7 +25,8 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl bg-app-card border border-app-border shadow-2xl">
+      {/* Wider modal: max-w-4xl instead of max-w-2xl */}
+      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl bg-app-card border border-app-border shadow-2xl">
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-app-border bg-app-card/95 backdrop-blur-sm">
           <div className="flex items-center gap-3">
@@ -92,7 +93,8 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
               </div>
             ) : (
               <div className="rounded-lg border border-app-border overflow-hidden">
-                <div className="grid grid-cols-[1fr,auto,auto,auto,auto] gap-3 px-3 py-2 bg-app-bg/60 border-b border-app-border">
+                {/* Fixed column widths for proper alignment */}
+                <div className="grid grid-cols-[1.5fr_60px_80px_80px_120px] gap-x-4 gap-y-0 px-4 py-2 bg-app-bg/60 border-b border-app-border">
                   <span className="text-xs font-semibold text-muted-foreground">电影</span>
                   <span className="text-xs font-semibold text-muted-foreground text-right">持股</span>
                   <span className="text-xs font-semibold text-muted-foreground text-right">成本价</span>
@@ -101,17 +103,17 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
                 </div>
                 <div className="divide-y divide-app-border/40">
                   {portfolio?.holdings.map((h) => (
-                    <div key={h.movieId} className="grid grid-cols-[1fr,auto,auto,auto,auto] gap-3 items-center px-3 py-2.5">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{h.movieName}</p>
-                        <p className="text-xs text-muted-foreground">{h.director}</p>
+                    <div key={h.movieId} className="grid grid-cols-[1.5fr_60px_80px_80px_120px] gap-x-4 gap-y-0 items-center px-4 py-2.5">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{h.movieName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{h.director}</p>
                       </div>
                       <span className="text-sm text-foreground tabular-nums text-right">{h.quantity}</span>
-                      <span className="text-sm text-muted-foreground tabular-nums text-right"><GameCoin amount={h.avgBuyPrice.toFixed(2)} /></span>
-                      <span className="text-sm text-foreground tabular-nums text-right"><GameCoin amount={h.currentPrice.toFixed(2)} /></span>
-                      <div className={`text-right ${h.pnl >= 0 ? "text-app-green" : "text-app-red"}`}>
-                        <span className="text-sm font-medium tabular-nums">{h.pnl >= 0 ? "+" : ""}<GameCoin amount={h.pnl.toFixed(2)} /></span>
-                        <span className="text-xs tabular-nums ml-1">({h.pnl >= 0 ? "+" : ""}{h.pnlPercent.toFixed(1)}%)</span>
+                      <span className="text-sm text-muted-foreground tabular-nums text-right"><GameCoin amount={h.avgBuyPrice.toFixed(2)} iconClassName="h-3 w-3" /></span>
+                      <span className="text-sm text-foreground tabular-nums text-right"><GameCoin amount={h.currentPrice.toFixed(2)} iconClassName="h-3 w-3" /></span>
+                      <div className={`text-right min-w-0 ${h.pnl >= 0 ? "text-app-green" : "text-app-red"}`}>
+                        <span className="text-sm font-medium tabular-nums inline-flex items-center gap-0.5">{h.pnl >= 0 ? "+" : ""}<GameCoin amount={h.pnl.toFixed(2)} iconClassName="h-3 w-3" /></span>
+                        <span className="text-xs tabular-nums ml-0.5">({h.pnl >= 0 ? "+" : ""}{h.pnlPercent.toFixed(1)}%)</span>
                       </div>
                     </div>
                   ))}
@@ -133,7 +135,7 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
               </div>
             ) : (
               <div className="rounded-lg border border-app-border overflow-hidden">
-                <div className="grid grid-cols-[auto,1fr,auto,auto,auto] gap-3 px-3 py-2 bg-app-bg/60 border-b border-app-border">
+                <div className="grid grid-cols-[80px_1fr_60px_90px_100px] gap-x-4 gap-y-0 px-4 py-2 bg-app-bg/60 border-b border-app-border">
                   <span className="text-xs font-semibold text-muted-foreground">类型</span>
                   <span className="text-xs font-semibold text-muted-foreground">电影</span>
                   <span className="text-xs font-semibold text-muted-foreground text-right">股数</span>
@@ -142,16 +144,16 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
                 </div>
                 <div className="divide-y divide-app-border/40 max-h-64 overflow-y-auto">
                   {transactions?.map((tx) => (
-                    <div key={tx.id} className="grid grid-cols-[auto,1fr,auto,auto,auto] gap-3 items-center px-3 py-2">
-                      <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${tx.type === "buy" ? "bg-app-green/10 text-app-green" : "bg-app-red/10 text-app-red"}`}>
-                        {tx.type === "buy" ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                        {tx.type === "buy" ? "买入" : "卖出"}
+                    <div key={tx.id} className="grid grid-cols-[80px_1fr_60px_90px_100px] gap-x-4 gap-y-0 items-center px-4 py-2">
+                      <div className={`flex items-center justify-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium w-fit ${tx.type === "buy" ? "bg-app-green/10 text-app-green" : "bg-app-red/10 text-app-red"}`}>
+                        {tx.type === "buy" ? <ArrowUpRight className="h-3 w-3 flex-shrink-0" /> : <ArrowDownRight className="h-3 w-3 flex-shrink-0" />}
+                        <span className="whitespace-nowrap">{tx.type === "buy" ? "买入" : "卖出"}</span>
                       </div>
                       <span className="text-sm text-foreground truncate">{tx.movieName}</span>
                       <span className="text-sm text-foreground tabular-nums text-right">{tx.quantity}</span>
-                      <span className="text-sm text-muted-foreground tabular-nums text-right"><GameCoin amount={tx.price.toFixed(2)} /></span>
-                      <span className={`text-sm font-medium tabular-nums text-right ${tx.type === "buy" ? "text-app-red" : "text-app-green"}`}>
-                        {tx.type === "buy" ? "-" : "+"}<GameCoin amount={tx.totalAmount.toFixed(2)} />
+                      <span className="text-sm text-muted-foreground tabular-nums text-right"><GameCoin amount={tx.price.toFixed(2)} iconClassName="h-3 w-3" /></span>
+                      <span className={`text-sm font-medium tabular-nums text-right whitespace-nowrap ${tx.type === "buy" ? "text-app-red" : "text-app-green"}`}>
+                        {tx.type === "buy" ? "-" : "+"}<GameCoin amount={tx.totalAmount.toFixed(2)} iconClassName="h-3 w-3" />
                       </span>
                     </div>
                   ))}
