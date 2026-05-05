@@ -7,6 +7,7 @@ import {
 import { trpc } from '@/providers/trpc';
 import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from '@/components/GameCoin';
+import { formatPremiereDate } from '@/lib/dateUtils';
 import { getMarketStatus, formatTimeRemaining } from '@contracts/market';
 import type { MovieQuote } from '@/types';
 
@@ -167,7 +168,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
             <div className="text-center">
               <p className="text-xs text-muted-foreground">首映时间</p>
               <p className="text-sm font-medium text-app-gold tabular-nums">
-                {movie.premiereDate || '待定'}
+                {formatPremiereDate(movie.premiereDate)}
               </p>
             </div>
             <div className="text-right">

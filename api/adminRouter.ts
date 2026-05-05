@@ -49,7 +49,7 @@ export const adminRouter = createRouter({
       z.object({
         name: z.string().min(1).max(100),
         director: z.string().min(1).max(100),
-        premiereDate: z.string().max(20).optional(),
+        premiereDate: z.string().max(50).optional(),
       }),
     )
     .mutation(async ({ input }) => {
@@ -87,7 +87,7 @@ export const adminRouter = createRouter({
     }),
 
   updateMoviePremiere: adminQuery
-    .input(z.object({ id: z.number(), premiereDate: z.string().max(20) }))
+    .input(z.object({ id: z.number(), premiereDate: z.string().max(50) }))
     .mutation(async ({ input }) => {
       await getDb()
         .update(movies)

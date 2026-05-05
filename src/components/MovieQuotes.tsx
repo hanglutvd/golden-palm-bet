@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { trpc } from '@/providers/trpc';
 import { movieQuotes } from '@/data/movieData';
 import { MovieDetailModal } from './MovieDetailModal';
+import { formatPremiereDate, comparePremiereDate } from '@/lib/dateUtils';
 
 export function MovieQuotes() {
   const [selectedMovieId, setSelectedMovieId] = useState<string | null>(null);
@@ -21,14 +22,7 @@ export function MovieQuotes() {
 
   // Sort movies based on selected sort mode
   if (sortBy === 'premiere') {
-    movies = [...movies].sort((a, b) => {
-      const dateA = a.premiereDate || '';
-      const dateB = b.premiereDate || '';
-      // "待定" or empty goes to the end
-      if (!dateA || dateA === '待定') return 1;
-      if (!dateB || dateB === '待定') return -1;
-      return dateA.localeCompare(dateB);
-    });
+    movies = [...movies].sort((a, b) => comparePremiereDate(a.premiereDate, b.premiereDate));
   }
 
   const selectedMovie = movies.find((m) => m.id === selectedMovieId) ?? null;
@@ -127,7 +121,7 @@ export function MovieQuotes() {
                     <td className="px-3 py-3 text-sm text-muted-foreground hidden md:table-cell tabular-nums">
                       <div className="flex items-center gap-1">
                         <CalendarDays className="h-3 w-3 text-app-gold/60" />
-                        {movie.premiereDate || '待定'}
+                        {formatPremiereDate(movie.premiereDate)}
                       </div>
                     </td>
                     <td className="px-3 py-3 text-right">

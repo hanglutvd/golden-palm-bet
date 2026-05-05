@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, Edit3, Check, X, CalendarDays } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 import { GameCoin } from '@/components/GameCoin';
+import { formatPremiereDate } from '@/lib/dateUtils';
 
 export function AdminMovies() {
   const [newName, setNewName] = useState('');
@@ -74,8 +75,9 @@ export function AdminMovies() {
           <input
             value={newPremiere}
             onChange={(e) => setNewPremiere(e.target.value)}
-            placeholder="首映时间（如：5月14日）"
-            className="w-40 rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-foreground focus:border-app-gold focus:outline-none"
+            type="datetime-local"
+            placeholder="首映时间"
+            className="w-56 rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-foreground focus:border-app-gold focus:outline-none"
           />
           <button
             onClick={() => {
@@ -117,9 +119,9 @@ export function AdminMovies() {
               {editingId === m.id ? (
                 <div className="flex items-center gap-1">
                   <input
+                    type="datetime-local"
                     value={editPremiere}
                     onChange={(e) => setEditPremiere(e.target.value)}
-                    placeholder="如：5月14日"
                     className="w-full rounded border border-app-border bg-app-bg px-2 py-0.5 text-xs text-foreground"
                     autoFocus
                   />
@@ -127,7 +129,7 @@ export function AdminMovies() {
               ) : (
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <CalendarDays className="h-3 w-3 text-app-gold/60" />
-                  {m.premiereDate || '—'}
+                  {formatPremiereDate(m.premiereDate)}
                 </div>
               )}
 
