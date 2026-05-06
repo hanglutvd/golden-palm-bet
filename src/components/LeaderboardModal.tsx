@@ -63,15 +63,15 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
         <div className="px-6 py-5 space-y-6">
           {/* Top 3 Podium */}
           {entries && entries.length >= 3 && (
-            <div className="flex items-end justify-center gap-4 pb-4">
+            <div className="flex items-end justify-center gap-6 pb-4">
               {/* 2nd Place */}
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2 pb-2">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full bg-slate-200/20 border-2 border-slate-400/30 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-slate-500/15 border-2 border-slate-400/30 flex items-center justify-center">
                     <Award className="h-6 w-6 text-slate-400" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-400/20 border border-slate-400/40 flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-slate-400">2</span>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-500/30 border border-slate-400/50 flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-slate-300">2</span>
                   </div>
                 </div>
                 <span className="text-sm font-medium text-foreground">{entries[1].username}</span>
@@ -81,13 +81,13 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
               </div>
 
               {/* 1st Place */}
-              <div className="flex flex-col items-center gap-2 -mt-4">
+              <div className="flex flex-col items-center gap-2 pb-0">
                 <div className="relative">
-                  <div className="w-18 h-18 rounded-full bg-yellow-500/20 border-2 border-yellow-500/50 flex items-center justify-center">
-                    <Trophy className="h-8 w-8 text-yellow-500" />
+                  <div className="w-16 h-16 rounded-full bg-yellow-500/15 border-2 border-yellow-500/40 flex items-center justify-center">
+                    <Trophy className="h-7 w-7 text-yellow-500" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-yellow-500/20 border border-yellow-500/50 flex items-center justify-center">
-                    <span className="text-xs font-bold text-yellow-500">1</span>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-yellow-500/30 border border-yellow-500/50 flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-yellow-400">1</span>
                   </div>
                 </div>
                 <span className="text-base font-bold text-foreground">{entries[0].username}</span>
@@ -97,13 +97,13 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
               </div>
 
               {/* 3rd Place */}
-              <div className="flex flex-col items-center gap-2">
+              <div className="flex flex-col items-center gap-2 pb-2">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full bg-amber-700/20 border-2 border-amber-700/30 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-amber-700/15 border-2 border-amber-700/30 flex items-center justify-center">
                     <Medal className="h-6 w-6 text-amber-700" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-700/20 border border-amber-700/40 flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-amber-700">3</span>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-700/30 border border-amber-700/50 flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-amber-600">3</span>
                   </div>
                 </div>
                 <span className="text-sm font-medium text-foreground">{entries[2].username}</span>
