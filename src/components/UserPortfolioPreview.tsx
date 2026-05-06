@@ -1,15 +1,14 @@
 import { useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown, Package, ChevronDown, ChevronUp, Settings } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Package, ChevronDown, ChevronUp } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from '@/components/GameCoin';
 
 interface UserPortfolioPreviewProps {
   onOpenFull: () => void;
-  onOpenSettings: () => void;
 }
 
-export function UserPortfolioPreview({ onOpenFull, onOpenSettings }: UserPortfolioPreviewProps) {
+export function UserPortfolioPreview({ onOpenFull }: UserPortfolioPreviewProps) {
   const { user } = useAuth();
   const { data: portfolio, isLoading } = trpc.trading.portfolio.useQuery(undefined, {
     enabled: !!user,
@@ -41,23 +40,14 @@ export function UserPortfolioPreview({ onOpenFull, onOpenSettings }: UserPortfol
       <div className="flex items-center justify-between px-4 py-3 border-b border-app-border">
         <div className="flex items-center gap-2">
           <Wallet className="h-4 w-4 text-app-gold" />
-          <h2 className="text-base font-bold text-foreground">我的资产</h2>
+          <h2 className="text-base font-bold text-foreground">我的持仓</h2>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onOpenSettings}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-app-gold transition-colors"
-          >
-            <Settings className="h-3 w-3" />
-            设置
-          </button>
-          <button
-            onClick={onOpenFull}
-            className="text-xs text-app-gold hover:text-app-gold/80 transition-colors"
-          >
-            查看详情
-          </button>
-        </div>
+        <button
+          onClick={onOpenFull}
+          className="text-xs text-app-gold hover:text-app-gold/80 transition-colors"
+        >
+          查看详情
+        </button>
       </div>
 
       {/* Summary Cards */}

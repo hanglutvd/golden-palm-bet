@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, X, LogOut, User, Shield } from 'lucide-react';
+import { Menu, X, LogOut, User, Shield, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from './GameCoin';
 
@@ -10,10 +10,11 @@ interface HeaderProps {
   onOpenMarket: () => void;
   onOpenPrizes: () => void;
   onOpenPortfolio?: () => void;
+  onOpenSettings?: () => void;
   onEnterAdmin: () => void;
 }
 
-export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarket, onOpenPrizes, onOpenPortfolio, onEnterAdmin }: HeaderProps) {
+export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarket, onOpenPrizes, onOpenPortfolio, onOpenSettings, onEnterAdmin }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
 
@@ -77,8 +78,12 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
               <button
+                onClick={onOpenSettings}
                 className="flex items-center gap-1 rounded-md border border-app-gold/20 px-2.5 py-1 text-xs font-medium text-app-gold hover:bg-app-gold/10 transition-colors"
+                title="个人设置"
               >
+                <Settings className="h-3.5 w-3.5" />
+                设置
               </button>
               <div className="flex flex-col items-end">
                 <div className="flex items-center gap-1.5 text-sm text-foreground">
@@ -164,13 +169,15 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
                     <span className="text-xs text-app-gold">(管理员)</span>
                   )}
                 </div>
-                {/* Mobile share button */}
                 <button
                   onClick={() => {
+                    onOpenSettings?.();
                     setMobileMenuOpen(false);
                   }}
                   className="flex items-center gap-1 rounded-md border border-app-gold/20 px-3 py-2 text-xs font-medium text-app-gold hover:bg-app-gold/10 transition-colors w-fit"
                 >
+                  <Settings className="h-3.5 w-3.5" />
+                  个人设置
                 </button>
                 {user.role === 'admin' && (
                   <button
@@ -197,13 +204,6 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
               </div>
             ) : (
               <div className="flex flex-col gap-2 pt-2 border-t border-app-border">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-1 rounded-md border border-app-gold/20 px-3 py-2 text-xs font-medium text-app-gold hover:bg-app-gold/10 transition-colors w-fit"
-                >
-                </button>
                 <button
                   onClick={() => {
                     onOpenAuth();

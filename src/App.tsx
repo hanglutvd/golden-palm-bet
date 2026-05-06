@@ -42,6 +42,7 @@ function HomePage({ onEnterAdmin, onOpenSettings }: { onEnterAdmin: () => void; 
         onOpenMarket={() => setMarketOpen(true)}
         onOpenPrizes={() => setPrizesOpen(true)}
         onOpenPortfolio={() => setPortfolioOpen(true)}
+        onOpenSettings={onOpenSettings}
         onEnterAdmin={onEnterAdmin}
       />
 
@@ -52,10 +53,7 @@ function HomePage({ onEnterAdmin, onOpenSettings }: { onEnterAdmin: () => void; 
             <MovieQuotes />
           </div>
           <div className="lg:w-[36%] flex flex-col gap-6">
-            <UserPortfolioPreview
-              onOpenFull={() => setPortfolioOpen(true)}
-              onOpenSettings={onOpenSettings}
-            />
+            <UserPortfolioPreview onOpenFull={() => setPortfolioOpen(true)} />
             <MarketPreview onOpenFull={() => setMarketOpen(true)} />
             <AwardResults />
             <Leaderboard onOpenFull={() => setLeaderboardOpen(true)} />
