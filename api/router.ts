@@ -5,6 +5,7 @@ import { movieRouter } from "./movieRouter.js";
 import { tradingRouter } from "./tradingRouter.js";
 import { diaryRouter } from "./diaryRouter.js";
 import { adminRouter } from "./adminRouter.js";
+import { configRouter } from "./configRouter.js";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
@@ -14,6 +15,7 @@ export const appRouter = createRouter({
   trading: tradingRouter,
   diary: diaryRouter,
   admin: adminRouter,
+  config: configRouter,
 });
 
 export type AppRouter = typeof appRouter;
