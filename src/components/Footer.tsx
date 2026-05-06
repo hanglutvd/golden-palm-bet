@@ -44,10 +44,10 @@ export function Footer() {
         <div className="border-t border-app-border/40 pt-3">
           <div className="flex flex-col items-center gap-2 text-center">
             <p className="text-xs text-muted-foreground">
-              金棕榈竞猜是一个非官方的竞猜游戏平台，与戛纳电影节组委会无直接关联。
+              戛纳主竞赛股市是一个非官方的竞猜游戏平台，与戛纳电影节组委会无直接关联。
             </p>
             <p className="text-xs text-muted-foreground">
-              © 2026 金棕榈竞猜 · 设计与开发：陀螺电影Toroscope
+              © 2026 戛纳主竞赛股市 · 设计与开发：陀螺电影Toroscope
             </p>
           </div>
         </div>
