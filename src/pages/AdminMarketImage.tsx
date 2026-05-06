@@ -4,15 +4,17 @@ import { trpc } from '@/providers/trpc';
 
 export function AdminMarketImage() {
   const utils = trpc.useUtils();
-  const { data: images } = trpc.config.getMarketImages.useQuery();
+  const { data: images, isLoading: isQueryLoading } = trpc.config.getMarketImages.useQuery();
   const saveMutation = trpc.config.setMarketImages.useMutation({
     onSuccess: () => {
       utils.config.getMarketImages.invalidate();
       setFiles([null, null, null]);
       setPreviews([null, null, null]);
+      setUploading(false);
       alert('行情图片已保存');
     },
     onError: (err) => {
+      setUploading(false);
       alert(err.message || '保存失败');
     },
   });
@@ -80,9 +82,10 @@ export function AdminMarketImage() {
         }
       }
 
-      saveMutation.mutate({
-        images: uploadedUrls.filter((u): u is string => !!u),
-      });
+      const finalUrls = uploadedUrls.filter((u): u is string => !!u);
+      console.log('[AdminMarketImage] Saving images:', finalUrls);
+
+      saveMutation.mutate({ images: finalUrls });
     } catch (err: any) {
       alert(err.message || '保存失败');
       setUploading(false);
@@ -90,7 +93,7 @@ export function AdminMarketImage() {
   };
 
   const hasChanges = files.some(Boolean);
-  const hasImages = images && images.some(Boolean);
+  const hasImages = images && images.length > 0;
 
   return (
     <div className="space-y-6">
@@ -100,6 +103,7 @@ export function AdminMarketImage() {
         <p className="text-sm text-muted-foreground">
           直接上传场刊评分表图片（JPG/PNG/WEBP，单张不超过 5MB）。
           首页「行情中心」将显示这些图片。
+          {hasImages && <span className="text-app-gold ml-1">当前已保存 {images?.length || 0} 张图片</span>}
         </p>
 
         {labels.map((label, i) => (
