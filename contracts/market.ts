@@ -113,6 +113,13 @@ export function getBeijingDateStr(): string {
 }
 
 /**
+ * Get current Beijing hour (0-23)
+ */
+export function getBeijingHour(): number {
+  return getBeijingTime().getHours();
+}
+
+/**
  * Get the settlement date key for a session
  * Format: "YYYY-MM-DD-am" or "YYYY-MM-DD-pm"
  */

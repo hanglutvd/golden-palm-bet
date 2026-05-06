@@ -1,7 +1,7 @@
 import { getDb } from "./connection.js";
 import { movies } from "../../db/schema.js";
 import { eq, desc } from "drizzle-orm";
-import { getBeijingDateStr } from "../../contracts/market.js";
+import { getBeijingDateStr, getBeijingHour } from "../../contracts/market.js";
 
 export async function findAllMovies() {
   return getDb().query.movies.findMany({
@@ -27,15 +27,23 @@ export async function updateMoviePrice(id: number, newPrice: number) {
   return newPrice;
 }
 
+function getSettlementKey(today: string, session: string) {
+  return `${today}-${session}`;
+}
+
 /**
- * Open the market for a single movie:
- * - If lastOpenDate !== today, apply accumulated dailyNetVolume to currentPrice
+ * Open the market for a single movie (lazy fallback):
+ * - If current session has not been settled, apply accumulated dailyNetVolume
  * - Reset dailyNetVolume to 0
- * - Set lastOpenDate to today
+ * - Set lastOpenDate to current session key (YYYY-MM-DD-am/pm)
  */
 export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   const today = getBeijingDateStr();
-  if (movie.lastOpenDate === today) return movie; // already opened today
+  const session = getBeijingHour() < 15 ? "am" : "pm";
+  const settlementKey = getSettlementKey(today, session);
+
+  // Exact match: if lastOpenDate equals expected session key, already settled
+  if (movie.lastOpenDate === settlementKey) return movie;
 
   const netVolume = Number(movie.dailyNetVolume);
   let newPrice = Number(movie.currentPrice);
@@ -51,7 +59,7 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
     .set({
       currentPrice: String(newPrice.toFixed(2)),
       dailyNetVolume: 0,
-      lastOpenDate: today,
+      lastOpenDate: settlementKey,
       updatedAt: new Date(),
     })
     .where(eq(movies.id, movie.id));
@@ -60,19 +68,25 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
     ...movie,
     currentPrice: String(newPrice.toFixed(2)),
     dailyNetVolume: 0,
-    lastOpenDate: today,
+    lastOpenDate: settlementKey,
   };
 }
 
 /**
- * Batch open market for all movies (used in list queries)
+ * Batch settlement for all movies (cron-triggered at 12:00 and 18:00):
+ * - 12:00 结算上午交易，标记为 YYYY-MM-DD-am，15:00 开盘时展示新价格
+ * - 18:00 结算下午交易，标记为 YYYY-MM-DD-pm，次日 09:00 开盘时展示新价格
  */
-export async function openMarketForAll() {
+export async function openMarketForAll(session?: "am" | "pm") {
   const today = getBeijingDateStr();
+  const nowHour = getBeijingHour();
+  const sessionKey = session || (nowHour < 15 ? "am" : "pm");
+  const settlementKey = getSettlementKey(today, sessionKey);
+
   const all = await findAllMovies();
 
   for (const movie of all) {
-    if (movie.lastOpenDate === today) continue;
+    if (movie.lastOpenDate === settlementKey) continue; // already settled for this session
 
     const netVolume = Number(movie.dailyNetVolume);
     let newPrice = Number(movie.currentPrice);
@@ -87,7 +101,7 @@ export async function openMarketForAll() {
       .set({
         currentPrice: String(newPrice.toFixed(2)),
         dailyNetVolume: 0,
-        lastOpenDate: today,
+        lastOpenDate: settlementKey,
         updatedAt: new Date(),
       })
       .where(eq(movies.id, movie.id));
@@ -155,7 +169,7 @@ export async function seedMovies() {
       basePrice: "100.00",
       totalVolume: "0",
       dailyNetVolume: 0,
-      lastOpenDate: getBeijingDateStr(),
+      lastOpenDate: getSettlementKey(getBeijingDateStr(), "am"),
       premiereDate: m.premiereDate,
     });
   }
