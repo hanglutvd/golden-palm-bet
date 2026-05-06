@@ -19,7 +19,7 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
   const { user, isAuthenticated, logout } = useAuth();
 
   const navItems = [
-    { label: '竞猜规则', href: '#', onClick: onOpenRules, highlight: true },
+    { label: '交易规则', href: '#', onClick: onOpenRules, highlight: true },
     { label: '口碑中心', href: '#', onClick: onOpenMarket },
     { label: '排行榜', href: '#', onClick: onOpenLeaderboard },
     { label: '奖品池', href: '#', onClick: onOpenPrizes },
@@ -46,9 +46,6 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
               }}
             >
               戛纳主竞赛股市
-            </span>
-            <span className="text-[11px] text-muted-foreground leading-none">
-              竞猜
             </span>
           </div>
         </div>
