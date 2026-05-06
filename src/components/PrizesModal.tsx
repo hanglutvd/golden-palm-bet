@@ -152,7 +152,20 @@ export function PrizesModal({ open, onClose }: PrizesModalProps) {
             </p>
           </div>
 
-          {/* Prize Image */}
+          {/* Prize Image - Cannes Merch */}
+          <div className="rounded-lg overflow-hidden border border-app-border">
+            <img
+              src="https://i.imgs.ovh/2026/05/06/c8ac39c3dfa6d790f2c691472aac64e3.png"
+              alt="戛纳电影节官方周边"
+              className="w-full h-auto object-cover"
+              loading="lazy"
+            />
+            <div className="px-3 py-2 bg-app-bg border-t border-app-border">
+              <p className="text-xs text-muted-foreground text-center">戛纳电影节官方周边</p>
+            </div>
+          </div>
+
+          {/* Prize Image - Wine */}
           <div className="rounded-lg overflow-hidden border border-app-border">
             <img
               src="https://i.imgs.ovh/2026/05/06/99a528d1115dcf2d2d640d54c82237ff.jpg"
@@ -166,7 +179,7 @@ export function PrizesModal({ open, onClose }: PrizesModalProps) {
           </div>
 
           {/* Sponsors */}
-          <div className="fflex items-center justify-center gap-6 pt-2">
+          <div className="flex items-center justify-center gap-6 pt-2">
             <div className="text-center">
               <p className="text-xs text-muted-foreground">奖品提供</p>
               <p className="text-sm font-medium text-foreground">陀螺电影Toroscope</p>
