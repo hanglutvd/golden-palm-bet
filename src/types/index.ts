@@ -2,7 +2,9 @@ export interface MovieQuote {
   id: string;
   rank: number;
   name: string;
-  director: string;
+  quote: string;
+  author: string;
+  role: string;
   price: number;
   change: number;
   changePercent: number;

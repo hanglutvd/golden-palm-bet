@@ -15,10 +15,22 @@ export function MovieQuotes() {
     retry: 1,
   });
 
-  // Use API data when available (convert number id to string), fallback to static data
-  let movies = apiMovies
-    ? apiMovies.map((m) => ({ ...m, id: String(m.id) }))
-    : movieQuotes;
+  // Merge API data (prices) with static data (quotes/authors)
+  let movies = movieQuotes.map((staticM) => {
+    const apiM = apiMovies?.find((a) => String(a.id) === staticM.id);
+    if (apiM) {
+      return {
+        ...staticM,
+        price: apiM.price,
+        basePrice: apiM.basePrice,
+        change: apiM.change,
+        changePercent: apiM.changePercent,
+        trend: apiM.trend,
+        premiereDate: apiM.premiereDate || staticM.premiereDate,
+      };
+    }
+    return staticM;
+  });
 
   // Sort movies based on selected sort mode
   if (sortBy === 'premiere') {
