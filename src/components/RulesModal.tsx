@@ -34,7 +34,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
           {/* Welcome */}
           <div className="rounded-lg bg-app-bg/80 border border-app-border/60 p-4">
             <p className="text-sm text-foreground leading-relaxed">
-              欢迎来到<strong className="text-app-gold">#戛纳竞猜平台</strong>！
+              欢迎来到<strong className="text-app-gold">#戛纳主竞赛股市</strong>！
             </p>
             <p className="text-sm text-foreground leading-relaxed mt-2">
               游戏的目标是押注第79届戛纳电影节主竞赛单元的入围影片，像在股市中一样买入和卖出电影"股份"。
@@ -85,7 +85,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
               </div>
               <div className="px-4 py-2.5">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  交易时段内可自由买入/卖出，价格保持不变。次日开盘时根据当日净成交量统一调整开盘价。
+                  交易时段内可自由买入/卖出，价格保持不变。12:00 和 18:00 收盘时分别根据本时段净成交量统一调整下一时段开盘价。
                 </p>
               </div>
             </div>

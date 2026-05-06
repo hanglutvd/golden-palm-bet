@@ -315,7 +315,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
           <div className="flex items-start gap-2 rounded-lg bg-app-gold/5 border border-app-gold/10 px-3 py-2.5">
             <DollarSign className="h-4 w-4 text-app-gold flex-shrink-0 mt-0.5" />
             <p className="text-xs text-app-gold leading-relaxed">
-              交易期间价格锁定为今日开盘价，买入/卖出仅影响您的持仓与余额。次日 09:00 开盘时，系统将根据当日净成交量统一更新价格。
+              交易期间价格锁定为时段开盘价，买入/卖出仅影响您的持仓与余额。上午 <strong>12:00</strong> 收盘后调整下午 15:00 开盘价，下午 <strong>18:00</strong> 收盘后调整次日 09:00 开盘价——系统根据各时段净成交量统一更新。
             </p>
           </div>
         </div>
