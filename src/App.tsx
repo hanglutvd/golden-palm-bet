@@ -16,7 +16,6 @@ import { PrizesModal } from './components/PrizesModal';
 import { UserPortfolioPreview } from './components/UserPortfolioPreview';
 import { AwardResults } from './components/AwardResults';
 import { AdminShell } from './components/AdminShell';
-import { ShareModal } from './components/ShareModal';
 import { Settings } from './pages/Settings';
 import { AuthProvider } from './hooks/useAuth';
 
@@ -29,7 +28,6 @@ function HomePage({ onEnterAdmin, onOpenSettings }: { onEnterAdmin: () => void; 
   const [forgotOpen, setForgotOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetToken, setResetToken] = useState("");
-  const [shareOpen, setShareOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [portfolioOpen, setPortfolioOpen] = useState(false);
   const [prizesOpen, setPrizesOpen] = useState(false);
@@ -45,7 +43,6 @@ function HomePage({ onEnterAdmin, onOpenSettings }: { onEnterAdmin: () => void; 
         onOpenPrizes={() => setPrizesOpen(true)}
         onOpenPortfolio={() => setPortfolioOpen(true)}
         onEnterAdmin={onEnterAdmin}
-        onOpenShare={() => setShareOpen(true)}
       />
 
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 lg:px-6 py-6">
@@ -90,7 +87,6 @@ function HomePage({ onEnterAdmin, onOpenSettings }: { onEnterAdmin: () => void; 
       <MarketModal open={marketOpen} onClose={() => setMarketOpen(false)} />
       <PortfolioModal open={portfolioOpen} onClose={() => setPortfolioOpen(false)} />
       <PrizesModal open={prizesOpen} onClose={() => setPrizesOpen(false)} />
-      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );
 }
