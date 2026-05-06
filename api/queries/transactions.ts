@@ -9,6 +9,7 @@ export async function createTransaction(data: {
   quantity: number;
   price: number;
   totalAmount: number;
+  session?: string;
 }) {
   await getDb().insert(transactions).values({
     userId: data.userId,
@@ -17,6 +18,7 @@ export async function createTransaction(data: {
     quantity: data.quantity,
     price: String(data.price.toFixed(2)),
     totalAmount: String(data.totalAmount.toFixed(2)),
+    session: data.session || "am",
   });
 }
 

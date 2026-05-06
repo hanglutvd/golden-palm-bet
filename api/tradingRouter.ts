@@ -1,14 +1,53 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware.js";
-import { assertTradingHours } from "../contracts/market.js";
+import { assertTradingHours, getCurrentSession, getBeijingDateStr } from "../contracts/market.js";
 import { TRPCError } from "@trpc/server";
 import { findMovieById, findAllMovies, incrementDailyNetVolume } from "./queries/movies.js";
 import { findHolding, upsertHolding, findHoldingsByUser } from "./queries/holdings.js";
 import { createTransaction, findTransactionsByUser } from "./queries/transactions.js";
 import { findUserById } from "./queries/users.js";
 import { getDb } from "./queries/connection.js";
-import { users } from "../db/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { users, transactions } from "../db/schema.js";
+import { eq, and, desc } from "drizzle-orm";
+
+const MAX_HOLDING_PER_MOVIE = 20;
+
+async function checkSessionTradeLimit(userId: number, movieId: number) {
+  const session = getCurrentSession();
+  if (!session) {
+    throw new Error("当前为非交易时段");
+  }
+
+  const today = getBeijingDateStr();
+
+  // Check if user already traded this movie in current session
+  const existing = getDb()
+    .select()
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        eq(transactions.movieId, movieId),
+        eq(transactions.session, session)
+      )
+    )
+    .all();
+
+  // Filter to today's transactions by checking created_at
+  const todayStart = new Date(`${today}T00:00:00+08:00`).getTime();
+  const todayEnd = new Date(`${today}T23:59:59+08:00`).getTime();
+  const todayTrades = existing.filter((t) => {
+    const ts = new Date(t.createdAt).getTime();
+    return ts >= todayStart && ts <= todayEnd;
+  });
+
+  if (todayTrades.length > 0) {
+    const sessionLabel = session === "am" ? "上午" : "下午";
+    throw new Error(`本${sessionLabel}时段已交易过该电影，请等待下个时段（${session === "am" ? "15:00" : "明日09:00"}）`);
+  }
+
+  return session;
+}
 
 export const tradingRouter = createRouter({
   buy: publicQuery
@@ -26,11 +65,21 @@ export const tradingRouter = createRouter({
       const movie = await findMovieById(input.movieId);
       if (!movie) throw new Error("电影不存在");
 
+      // Check session trade limit
+      const session = await checkSessionTradeLimit(user.id, input.movieId);
+
       const price = Number(movie.currentPrice);
       const totalCost = price * input.quantity;
 
       if (Number(user.balance) < totalCost) {
         throw new Error(`余额不足，需要 ¥${totalCost.toFixed(2)}，当前余额 ¥${Number(user.balance).toFixed(2)}`);
+      }
+
+      // Check holding limit
+      const existingHolding = await findHolding(user.id, input.movieId);
+      const currentQty = existingHolding ? Number(existingHolding.quantity) : 0;
+      if (currentQty + input.quantity > MAX_HOLDING_PER_MOVIE) {
+        throw new Error(`持股上限为 ${MAX_HOLDING_PER_MOVIE} 股，当前持有 ${currentQty} 股，最多可再买 ${MAX_HOLDING_PER_MOVIE - currentQty} 股`);
       }
 
       // Deduct balance
@@ -42,7 +91,7 @@ export const tradingRouter = createRouter({
       // Record holding
       await upsertHolding(user.id, input.movieId, input.quantity, price);
 
-      // Record transaction
+      // Record transaction with session
       await createTransaction({
         userId: user.id,
         movieId: input.movieId,
@@ -50,9 +99,10 @@ export const tradingRouter = createRouter({
         quantity: input.quantity,
         price,
         totalAmount: totalCost,
+        session,
       });
 
-      // Accumulate daily net volume (price updated at next market open)
+      // Accumulate daily net volume
       await incrementDailyNetVolume(input.movieId, input.quantity);
 
       return {
@@ -79,8 +129,11 @@ export const tradingRouter = createRouter({
       const movie = await findMovieById(input.movieId);
       if (!movie) throw new Error("电影不存在");
 
+      // Check session trade limit
+      const session = await checkSessionTradeLimit(user.id, input.movieId);
+
       const holding = await findHolding(user.id, input.movieId);
-      if (!holding || holding.quantity < input.quantity) {
+      if (!holding || Number(holding.quantity) < input.quantity) {
         throw new Error(`持股不足，持有 ${holding?.quantity || 0} 股，尝试卖出 ${input.quantity} 股`);
       }
 
@@ -96,7 +149,7 @@ export const tradingRouter = createRouter({
       // Reduce holding
       await upsertHolding(user.id, input.movieId, -input.quantity, price);
 
-      // Record transaction
+      // Record transaction with session
       await createTransaction({
         userId: user.id,
         movieId: input.movieId,
@@ -104,9 +157,10 @@ export const tradingRouter = createRouter({
         quantity: input.quantity,
         price,
         totalAmount: totalRevenue,
+        session,
       });
 
-      // Accumulate daily net volume (negative = net sell)
+      // Accumulate daily net volume
       await incrementDailyNetVolume(input.movieId, -input.quantity);
 
       return {

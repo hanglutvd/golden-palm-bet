@@ -61,6 +61,7 @@ export function initDatabase() {
     )
   `);
 
+  // Create transactions table with session field
   db.run(`
     CREATE TABLE IF NOT EXISTS transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -70,9 +71,15 @@ export function initDatabase() {
       quantity INTEGER NOT NULL,
       price TEXT NOT NULL,
       total_amount TEXT NOT NULL,
+      session TEXT NOT NULL DEFAULT 'am',
       created_at INTEGER NOT NULL DEFAULT (unixepoch())
     )
   `);
+
+  // Migrate: add session column to existing transactions table
+  try {
+    db.run(`ALTER TABLE transactions ADD COLUMN session TEXT NOT NULL DEFAULT 'am'`);
+  } catch { /* already exists or table is new */ }
 
   db.run(`
     CREATE TABLE IF NOT EXISTS diaries (
@@ -80,10 +87,29 @@ export function initDatabase() {
       title TEXT NOT NULL,
       summary TEXT,
       cover_image TEXT,
+      cover_image_2 TEXT,
+      cover_image_3 TEXT,
       external_url TEXT,
       wechat_article_id TEXT,
       publish_date INTEGER NOT NULL DEFAULT (unixepoch()),
       created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+
+  // Migrate: add cover_image_2 and cover_image_3 if missing
+  try {
+    db.run(`ALTER TABLE diaries ADD COLUMN cover_image_2 TEXT`);
+  } catch { /* already exists */ }
+  try {
+    db.run(`ALTER TABLE diaries ADD COLUMN cover_image_3 TEXT`);
+  } catch { /* already exists */ }
+
+  // Site config table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS site_config (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at INTEGER NOT NULL DEFAULT (unixepoch())
     )
   `);
 

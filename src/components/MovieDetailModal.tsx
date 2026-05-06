@@ -191,7 +191,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
                 {marketStatus.status}
               </span>
               <span className="text-xs text-muted-foreground">
-                09:00 - 15:00 北京时间
+                09:00-12:00 / 15:00-18:00 北京时间
               </span>
             </div>
             <span className="text-xs tabular-nums text-muted-foreground">
@@ -293,7 +293,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
                   <div className="flex items-center gap-2 rounded-md bg-muted/40 border border-app-border px-3 py-2">
                     <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <p className="text-xs text-muted-foreground">
-                      当前为非交易时段，09:00 - 15:00（北京时间）方可交易
+                      当前为非交易时段，09:00-12:00 / 15:00-18:00（北京时间）方可交易
                     </p>
                   </div>
                 )}

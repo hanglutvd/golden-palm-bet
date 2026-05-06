@@ -45,6 +45,7 @@ export const transactions = sqliteTable("transactions", {
   quantity: integer("quantity").notNull(),
   price: text("price").notNull(),
   totalAmount: text("total_amount").notNull(),
+  session: text("session", { enum: ["am", "pm"] }).notNull().default("am"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
@@ -53,6 +54,8 @@ export const diaries = sqliteTable("diaries", {
   title: text("title").notNull(),
   summary: text("summary"),
   coverImage: text("cover_image"),
+  coverImage2: text("cover_image_2"),
+  coverImage3: text("cover_image_3"),
   externalUrl: text("external_url"),
   wechatArticleId: text("wechat_article_id"),
   publishDate: integer("publish_date", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
