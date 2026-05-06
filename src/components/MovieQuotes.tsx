@@ -35,6 +35,9 @@ export function MovieQuotes() {
   // Sort movies based on selected sort mode
   if (sortBy === 'premiere') {
     movies = [...movies].sort((a, b) => comparePremiereDate(a.premiereDate, b.premiereDate));
+  } else {
+    // Sort by price descending (highest first)
+    movies = [...movies].sort((a, b) => b.price - a.price);
   }
 
   const selectedMovie = movies.find((m) => m.id === selectedMovieId) ?? null;
@@ -63,14 +66,10 @@ export function MovieQuotes() {
           </div>
           <button
             onClick={() => setSortBy(sortBy === 'price' ? 'premiere' : 'price')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors ${
-              sortBy === 'premiere'
-                ? 'bg-app-gold/10 border-app-gold/30 text-app-gold'
-                : 'border-app-border/60 text-muted-foreground hover:text-foreground hover:bg-app-hover'
-            }`}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors bg-app-gold/10 border-app-gold/30 text-app-gold"
           >
             <ArrowUpDown className="h-3.5 w-3.5" />
-            {sortBy === 'price' ? '按价格排序' : '按首映排序'}
+            {sortBy === 'price' ? '价格降序' : '首映时间'}
           </button>
         </div>
 
