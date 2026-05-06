@@ -1,6 +1,7 @@
-import { RefreshCw, Trophy, Medal, Award, Info } from 'lucide-react';
+import { RefreshCw, Trophy, Medal, Award, Info, User } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { trpc } from '@/providers/trpc';
+import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from './GameCoin';
 
 interface LeaderboardProps {
@@ -9,6 +10,7 @@ interface LeaderboardProps {
 
 export function Leaderboard({ onOpenFull }: LeaderboardProps) {
   const { data: entries, isLoading } = trpc.leaderboard.list.useQuery();
+  const { user } = useAuth();
 
   return (
     <div className="rounded-lg bg-app-card overflow-hidden">
@@ -47,11 +49,12 @@ export function Leaderboard({ onOpenFull }: LeaderboardProps) {
         ) : (
           entries.slice(0, 10).map((entry) => {
             const isTop3 = entry.rank <= 3;
+            const isMe = user && entry.username === user.username;
             return (
               <div
                 key={entry.rank}
                 className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-app-hover ${
-                  isTop3 ? 'bg-app-gold/[0.03]' : ''
+                  isMe ? 'bg-app-gold/15 border-l-2 border-app-gold' : isTop3 ? 'bg-app-gold/[0.03]' : ''
                 }`}
               >
                 {/* Rank */}
@@ -70,12 +73,13 @@ export function Leaderboard({ onOpenFull }: LeaderboardProps) {
                 </div>
 
                 {/* Username */}
-                <span className="text-sm text-foreground truncate flex-1 min-w-0">
+                <span className={`text-sm truncate flex-1 min-w-0 flex items-center gap-1 ${isMe ? 'font-bold text-app-gold' : 'text-foreground'}`}>
                   {entry.username}
+                  {isMe && <User className="h-3 w-3 text-app-gold" />}
                 </span>
 
                 {/* Total Assets */}
-                <span className="text-sm font-medium text-app-gold tabular-nums text-right">
+                <span className={`text-sm font-medium tabular-nums text-right ${isMe ? 'text-app-gold' : ''}`}>
                   <GameCoin amount={entry.totalAssets.toFixed(2)} iconClassName="h-3 w-3" />
                 </span>
               </div>

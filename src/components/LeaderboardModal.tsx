@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { RefreshCw, Trophy, Medal, Award, X, Info } from 'lucide-react';
+import { RefreshCw, Trophy, Medal, Award, X, Info, User } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { trpc } from '@/providers/trpc';
+import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from './GameCoin';
 
 interface LeaderboardModalProps {
@@ -13,6 +14,7 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
   const { data: entries, isLoading, refetch } = trpc.leaderboard.list.useQuery(undefined, {
     enabled: open,
   });
+  const { user } = useAuth();
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   const handleRefresh = async () => {
@@ -133,11 +135,12 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
               ) : (
                 entries.map((entry) => {
                   const isTop3 = entry.rank <= 3;
+                  const isMe = user && entry.username === user.username;
                   return (
                     <div
                       key={entry.rank}
                       className={`grid grid-cols-[50px_1fr_80px_80px_100px] gap-3 items-center px-4 py-2.5 transition-colors hover:bg-app-hover ${
-                        isTop3 ? 'bg-app-gold/[0.02]' : ''
+                        isMe ? 'bg-app-gold/15 border-l-2 border-app-gold' : isTop3 ? 'bg-app-gold/[0.02]' : ''
                       }`}
                     >
                       <div className="flex items-center justify-center">
@@ -151,7 +154,10 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
                           <span className="text-xs text-muted-foreground tabular-nums">{entry.rank}</span>
                         )}
                       </div>
-                      <span className="text-sm text-foreground truncate">{entry.username}</span>
+                      <span className={`text-sm truncate flex items-center gap-1 ${isMe ? 'font-bold text-app-gold' : 'text-foreground'}`}>
+                        {entry.username}
+                        {isMe && <User className="h-3 w-3 text-app-gold" />}
+                      </span>
                       <span className="text-xs text-muted-foreground tabular-nums text-right">
                         <GameCoin amount={entry.balance.toFixed(2)} iconClassName="h-3 w-3" />
                       </span>
