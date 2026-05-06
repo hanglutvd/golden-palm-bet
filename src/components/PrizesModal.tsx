@@ -82,7 +82,6 @@ export function PrizesModal({ open, onClose }: PrizesModalProps) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -112,19 +111,6 @@ export function PrizesModal({ open, onClose }: PrizesModalProps) {
             <p className="text-sm text-app-gold leading-relaxed">
               电影节闭幕、获奖名单公布且所有分红结算完成后，系统将锁定最终排名。排名依据为玩家的总资产（账户余额 + 持仓市值）。排名前10的玩家均可获得奖品，奖品由陀螺电影Toroscope和北京Lazy酒吧联合提供。
             </p>
-          </div>
-
-          {/* Prize Image */}
-          <div className="rounded-lg overflow-hidden border border-app-border">
-            <img
-              src="https://i.imgs.ovh/2026/05/06/99a528d1115dcf2d2d640d54c82237ff.jpg"
-              alt="Lazy酒吧葡萄酒套装（三瓶）"
-              className="w-full h-auto object-cover"
-              loading="lazy"
-            />
-            <div className="px-3 py-2 bg-app-bg border-t border-app-border">
-              <p className="text-xs text-muted-foreground text-center">Lazy酒吧葡萄酒套装（三瓶）- 第1至5名均可获得</p>
-            </div>
           </div>
 
           {/* Prize Tiers */}
@@ -166,8 +152,21 @@ export function PrizesModal({ open, onClose }: PrizesModalProps) {
             </p>
           </div>
 
+          {/* Prize Image */}
+          <div className="rounded-lg overflow-hidden border border-app-border">
+            <img
+              src="https://i.imgs.ovh/2026/05/06/99a528d1115dcf2d2d640d54c82237ff.jpg"
+              alt="Lazy酒吧葡萄酒套装（三瓶）"
+              className="w-full h-auto object-cover"
+              loading="lazy"
+            />
+            <div className="px-3 py-2 bg-app-bg border-t border-app-border">
+              <p className="text-xs text-muted-foreground text-center">Lazy酒吧葡萄酒套装（三瓶）- 第1至5名均可获得</p>
+            </div>
+          </div>
+
           {/* Sponsors */}
-          <div className="flex items-center justify-center gap-6 pt-2">
+          <div className="fflex items-center justify-center gap-6 pt-2">
             <div className="text-center">
               <p className="text-xs text-muted-foreground">奖品提供</p>
               <p className="text-sm font-medium text-foreground">陀螺电影Toroscope</p>
