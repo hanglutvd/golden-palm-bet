@@ -116,11 +116,11 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
 
           {/* Full Table */}
           <div className="rounded-lg border border-app-border overflow-hidden">
-            <div className="grid grid-cols-[50px_1fr_80px_80px_100px] gap-3 px-4 py-2 bg-app-bg/60 border-b border-app-border">
+            <div className="grid grid-cols-[40px_1fr_90px] md:grid-cols-[50px_1fr_80px_80px_100px] gap-2 md:gap-3 px-3 md:px-4 py-2 bg-app-bg/60 border-b border-app-border">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">排名</span>
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">用户</span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">余额</span>
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">市值</span>
+              <span className="hidden md:block text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">余额</span>
+              <span className="hidden md:block text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">市值</span>
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">总资产</span>
             </div>
             <div className="divide-y divide-app-border/40 max-h-[400px] overflow-y-auto">
@@ -139,7 +139,7 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
                   return (
                     <div
                       key={entry.rank}
-                      className={`grid grid-cols-[50px_1fr_80px_80px_100px] gap-3 items-center px-4 py-2.5 transition-colors hover:bg-app-hover ${
+                      className={`grid grid-cols-[40px_1fr_90px] md:grid-cols-[50px_1fr_80px_80px_100px] gap-2 md:gap-3 items-center px-3 md:px-4 py-2.5 transition-colors hover:bg-app-hover ${
                         isMe ? 'bg-app-gold/15 border-l-2 border-app-gold' : isTop3 ? 'bg-app-gold/[0.02]' : ''
                       }`}
                     >
@@ -154,14 +154,14 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
                           <span className="text-xs text-muted-foreground tabular-nums">{entry.rank}</span>
                         )}
                       </div>
-                      <span className={`text-sm truncate flex items-center gap-1 ${isMe ? 'font-bold text-app-gold' : 'text-foreground'}`}>
+                      <span className={`text-sm truncate min-w-0 flex items-center gap-1 ${isMe ? 'font-bold text-app-gold' : 'text-foreground'}`}>
                         {entry.username}
-                        {isMe && <User className="h-3 w-3 text-app-gold" />}
+                        {isMe && <User className="h-3 w-3 text-app-gold flex-shrink-0" />}
                       </span>
-                      <span className="text-xs text-muted-foreground tabular-nums text-right">
+                      <span className="hidden md:block text-xs text-muted-foreground tabular-nums text-right">
                         <GameCoin amount={entry.balance.toFixed(2)} iconClassName="h-3 w-3" />
                       </span>
-                      <span className="text-xs text-muted-foreground tabular-nums text-right">
+                      <span className="hidden md:block text-xs text-muted-foreground tabular-nums text-right">
                         <GameCoin amount={entry.marketValue.toFixed(2)} iconClassName="h-3 w-3" />
                       </span>
                       <span className="text-sm font-medium text-app-gold tabular-nums text-right">
