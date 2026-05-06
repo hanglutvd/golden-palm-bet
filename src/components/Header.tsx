@@ -74,22 +74,13 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
 
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
-              <button
+              <div
+                className="flex items-center gap-1.5 text-sm text-foreground cursor-pointer hover:text-app-gold transition-colors"
                 onClick={onOpenSettings}
-                className="flex items-center gap-1 rounded-md border border-app-gold/20 px-2.5 py-1 text-xs font-medium text-app-gold hover:bg-app-gold/10 transition-colors"
                 title="个人设置"
               >
-                <Settings className="h-3.5 w-3.5" />
-                设置
-              </button>
-              <div className="flex flex-col items-end">
-                <div className="flex items-center gap-1.5 text-sm text-foreground">
-                  <User className="h-4 w-4 text-app-gold" />
-                  <span className="font-medium">{user.username}</span>
-                </div>
-                <span className="text-xs text-app-gold tabular-nums">
-                  <GameCoin amount={user.balance} />
-                </span>
+                <User className="h-4 w-4 text-app-gold" />
+                <span className="font-medium">{user.username}</span>
               </div>
               {user.role === 'admin' && (
                 <button
