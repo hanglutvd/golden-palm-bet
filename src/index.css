@@ -33,17 +33,24 @@
     --sidebar-border: 35 12% 20%;
     --sidebar-ring: 43 55% 55%;
 
-    /* Festival Gold Scheme */
+    /* Festival Gold + Purple Accent Scheme */
     --app-bg: #141210;
     --app-card: #1a1816;
     --app-row: #1e1c1a;
     --app-hover: #282422;
-    --app-border: #3d3528;
+    --app-border: #3d2f40;
     --app-blue: #7a9cc0;
     --app-blue-hover: #8cadd1;
     --app-gold: #c9a84c;
     --app-green: #5b8c5a;
     --app-red: #c45c4a;
+
+    --primary: 43 55% 55%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 43 55% 55%;
+    --sidebar-primary: 43 55% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-ring: 43 55% 55%;
   }
 }
 
@@ -120,7 +127,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #504830;
+  background: #503040;
 }
 
 /* Spin animation for refresh */
