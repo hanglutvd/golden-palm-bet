@@ -27,7 +27,7 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-app-border bg-app-card header-gold-strip">
+    <header className="sticky top-0 z-50 border-b border-app-border/60 bg-[#141428]/95 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 lg:px-6">
         {/* Logo */}
         <div className="flex items-center gap-2.5">
