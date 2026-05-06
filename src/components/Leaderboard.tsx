@@ -1,129 +1,112 @@
-import { useState } from 'react';
 import { RefreshCw, Trophy, Medal, Award, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { trpc } from '@/providers/trpc';
-import { GameCoin } from '@/components/GameCoin';
+import { GameCoin } from './GameCoin';
 
 interface LeaderboardProps {
-  onOpenFull?: () => void;
+  onOpenFull: () => void;
 }
 
 export function Leaderboard({ onOpenFull }: LeaderboardProps) {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const { data: entries, isLoading } = trpc.leaderboard.list.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
-
-  const utils = trpc.useUtils();
-
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    utils.leaderboard.list.invalidate();
-    setTimeout(() => setIsRefreshing(false), 600);
-  };
-
-  const getMedalIcon = (medal?: string) => {
-    switch (medal) {
-      case 'gold':
-        return <Trophy className="h-4 w-4 text-yellow-400" />;
-      case 'silver':
-        return <Medal className="h-4 w-4 text-gray-300" />;
-      case 'bronze':
-        return <Award className="h-4 w-4 text-amber-600" />;
-      default:
-        return null;
-    }
-  };
-
-  const displayEntries = (entries || []).slice(0, 10);
+  const { data: entries, isLoading } = trpc.leaderboard.list.useQuery();
 
   return (
     <div className="rounded-lg bg-app-card overflow-hidden">
-      {/* Section Title */}
+      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-app-border">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-app-gold">财富排行</h2>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="text-muted-foreground hover:text-foreground transition-colors">
-                  <Info className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="bg-app-card border-app-border max-w-xs">
-                <p className="text-xs text-muted-foreground">
-                  根据玩家当前虚拟资产总额排序，实时更新。
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Trophy className="h-4 w-4 text-app-gold" />
+          <h2 className="text-base font-bold text-app-gold">财富排行</h2>
         </div>
         <button
-          onClick={handleRefresh}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          onClick={onOpenFull}
+          className="flex items-center gap-1 text-xs text-app-gold hover:text-app-gold/80 transition-colors"
         >
-          <RefreshCw
-            className={`h-4 w-4 ${isRefreshing ? 'animate-spin-once' : ''}`}
-          />
+          查看详情
+          <RefreshCw className="h-3 w-3" />
         </button>
       </div>
 
       {/* Table Header */}
-      <div className="grid grid-cols-[auto,1fr,auto] gap-3 px-4 py-2 border-b border-app-border">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground w-8">
-          排名
-        </span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          玩家
-        </span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">
-          资产
-        </span>
+      <div className="grid grid-cols-[40px_1fr_1fr] gap-3 px-4 py-2 border-b border-app-border">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">#</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">用户</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">总资产</span>
       </div>
 
-      {/* Leaderboard List */}
+      {/* Entries */}
       <div className="divide-y divide-app-border/60">
         {isLoading ? (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-            加载中...
+          <div className="px-4 py-6 text-center">
+            <div className="animate-spin h-5 w-5 border-2 border-app-gold border-t-transparent rounded-full mx-auto" />
           </div>
-        ) : displayEntries.length === 0 ? (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-            暂无玩家数据，快来注册参与竞猜吧！
+        ) : !entries || entries.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+            暂无数据
           </div>
         ) : (
-          displayEntries.map((entry) => (
-            <div
-              key={entry.rank}
-              className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5 transition-colors duration-200 hover:bg-app-hover gold-sweep"
-            >
-              <span className="text-sm font-semibold text-muted-foreground tabular-nums w-8">
-                {entry.rank}.
-              </span>
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-sm font-medium text-foreground truncate">
+          entries.slice(0, 10).map((entry) => {
+            const isTop3 = entry.rank <= 3;
+            return (
+              <div
+                key={entry.rank}
+                className={`flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-app-hover ${
+                  isTop3 ? 'bg-app-gold/[0.03]' : ''
+                }`}
+              >
+                {/* Rank */}
+                <div className="w-6 flex-shrink-0 flex justify-center">
+                  {entry.rank === 1 ? (
+                    <Medal className="h-4 w-4 text-yellow-500" />
+                  ) : entry.rank === 2 ? (
+                    <Medal className="h-4 w-4 text-slate-400" />
+                  ) : entry.rank === 3 ? (
+                    <Medal className="h-4 w-4 text-amber-700" />
+                  ) : (
+                    <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                      {entry.rank}
+                    </span>
+                  )}
+                </div>
+
+                {/* Username */}
+                <span className="text-sm text-foreground truncate flex-1 min-w-0">
                   {entry.username}
                 </span>
-                {getMedalIcon(entry.medal)}
+
+                {/* Total Assets */}
+                <span className="text-sm font-medium text-app-gold tabular-nums text-right">
+                  <GameCoin amount={entry.totalAssets.toFixed(2)} iconClassName="h-3 w-3" />
+                </span>
               </div>
-              <span className="text-sm font-semibold tabular-nums text-app-gold">
-                <GameCoin amount={entry.balance} />
-              </span>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
-      {/* Footer link */}
-      <div className="px-4 py-3 border-t border-app-border text-center">
-        <button
-          onClick={onOpenFull}
-          className="text-sm text-app-gold transition-colors duration-150 hover:text-app-gold/80 hover:underline"
-        >
-          查看完整排行...
-        </button>
-      </div>
+      {/* Summary */}
+      {entries && entries.length > 0 && (
+        <div className="px-4 py-2 border-t border-app-border bg-app-bg/40">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>共 {entries.length} 位投资者</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button className="flex items-center gap-1 hover:text-app-gold transition-colors">
+                    <Info className="h-3 w-3" />
+                    <span>排行规则</span>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-app-card border-app-border max-w-[200px]">
+                  <p className="text-xs text-muted-foreground">
+                    按总资产排序（余额 + 持仓市值）。每日交易时段结束后自动更新。
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
