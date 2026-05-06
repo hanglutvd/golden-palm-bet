@@ -89,7 +89,7 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
             ) : !hasHoldings ? (
               <div className="rounded-lg bg-app-bg/40 border border-app-border/40 px-4 py-6 text-center">
                 <p className="text-sm text-muted-foreground">暂无持仓</p>
-                <p className="text-xs text-muted-foreground mt-1">在行情页面买入电影股票即可开始投资</p>
+                <p className="text-xs text-muted-foreground mt-1">在股市行情买入电影股票即可开始投资</p>
               </div>
             ) : (
               <div className="rounded-lg border border-app-border overflow-x-auto">

@@ -33,7 +33,7 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
         <div className="flex items-center gap-2.5">
           <img
             src="https://i.imgs.ovh/2026/05/05/2cac6253d3fed931741b9c887cee2343.png"
-            alt="金棕榈"
+            alt="戛纳主竞赛股市"
             className="h-8 w-auto object-contain"
           />
           <div className="flex flex-col">
@@ -45,7 +45,7 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              金棕榈
+              戛纳主竞赛股市
             </span>
             <span className="text-[11px] text-muted-foreground leading-none">
               竞猜

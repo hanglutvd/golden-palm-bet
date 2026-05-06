@@ -120,7 +120,7 @@ export function UserPortfolioPreview({ onOpenFull }: UserPortfolioPreviewProps) 
 
       {!hasHoldings && (
         <div className="px-4 pb-3 text-center">
-          <p className="text-xs text-muted-foreground">暂无持仓，去行情页买入电影股票吧</p>
+          <p className="text-xs text-muted-foreground">暂无持仓，去股市行情买入电影股票吧</p>
         </div>
       )}
     </div>
