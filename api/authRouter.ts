@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { createRouter, publicQuery } from "./middleware.js";
-import { findUserByEmailOrUsername, findUserById, findUserByEmail, findUserByResetToken, createUser, setResetToken, clearResetToken, updatePassword, countUsers } from "./queries/users.js";
+import { findUserByEmailOrUsername, findUserById, findUserByEmail, findUserByResetToken, findUserByUsername, createUser, setResetToken, clearResetToken, updatePassword, updateUsername, countUsers } from "./queries/users.js";
 import { sendPasswordResetEmail } from "./lib/email.js";
 import { env } from "./lib/env.js";
 
@@ -174,5 +174,51 @@ export const authRouter = createRouter({
     .query(async ({ input }) => {
       const user = await findUserByResetToken(input.token);
       return { valid: !!user };
+    }),
+
+  // Update profile (username)
+  updateProfile: publicQuery
+    .input(
+      z.object({
+        username: z.string().min(2).max(50),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
+
+      // Check if username is taken
+      const existing = await findUserByUsername(input.username);
+      if (existing && existing.id !== ctx.user.id) {
+        throw new Error("该昵称已被使用");
+      }
+
+      await updateUsername(ctx.user.id, input.username);
+      return { message: "昵称修改成功" };
+    }),
+
+  // Change password
+  changePassword: publicQuery
+    .input(
+      z.object({
+        oldPassword: z.string().min(1),
+        newPassword: z.string().min(6),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
+
+      const user = await findUserById(ctx.user.id);
+      if (!user) throw new Error("用户不存在");
+
+      // Verify old password
+      const valid = await bcrypt.compare(input.oldPassword, user.passwordHash);
+      if (!valid) {
+        throw new Error("原密码错误");
+      }
+
+      const passwordHash = await bcrypt.hash(input.newPassword, SALT_ROUNDS);
+      await updatePassword(user.id, passwordHash);
+
+      return { message: "密码修改成功" };
     }),
 });

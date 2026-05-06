@@ -16,18 +16,24 @@ import { PrizesModal } from './components/PrizesModal';
 import { UserPortfolioPreview } from './components/UserPortfolioPreview';
 import { AwardResults } from './components/AwardResults';
 import { AdminShell } from './components/AdminShell';
+import { ShareModal } from './components/ShareModal';
+import { Settings } from './pages/Settings';
 import { AuthProvider } from './hooks/useAuth';
 
-function HomePage({ onEnterAdmin }: { onEnterAdmin: () => void }) {
+// Global leaderboard modal state (used by both Header and HomePage)
+const leaderboardOpenState = { value: false };
+
+function HomePage({ onEnterAdmin, onOpenSettings }: { onEnterAdmin: () => void; onOpenSettings: () => void }) {
   const [rulesOpen, setRulesOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetToken, setResetToken] = useState("");
-  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [marketOpen, setMarketOpen] = useState(false);
   const [portfolioOpen, setPortfolioOpen] = useState(false);
   const [prizesOpen, setPrizesOpen] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-app-bg flex flex-col">
@@ -39,6 +45,7 @@ function HomePage({ onEnterAdmin }: { onEnterAdmin: () => void }) {
         onOpenPrizes={() => setPrizesOpen(true)}
         onOpenPortfolio={() => setPortfolioOpen(true)}
         onEnterAdmin={onEnterAdmin}
+        onOpenShare={() => setShareOpen(true)}
       />
 
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 lg:px-6 py-6">
@@ -48,7 +55,10 @@ function HomePage({ onEnterAdmin }: { onEnterAdmin: () => void }) {
             <MovieQuotes />
           </div>
           <div className="lg:w-[36%] flex flex-col gap-6">
-            <UserPortfolioPreview onOpenFull={() => setPortfolioOpen(true)} />
+            <UserPortfolioPreview
+              onOpenFull={() => setPortfolioOpen(true)}
+              onOpenSettings={onOpenSettings}
+            />
             <MarketPreview onOpenFull={() => setMarketOpen(true)} />
             <AwardResults />
             <Leaderboard onOpenFull={() => setLeaderboardOpen(true)} />
@@ -80,19 +90,27 @@ function HomePage({ onEnterAdmin }: { onEnterAdmin: () => void }) {
       <MarketModal open={marketOpen} onClose={() => setMarketOpen(false)} />
       <PortfolioModal open={portfolioOpen} onClose={() => setPortfolioOpen(false)} />
       <PrizesModal open={prizesOpen} onClose={() => setPrizesOpen(false)} />
+      <ShareModal open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
   );
 }
 
+type Page = 'home' | 'admin' | 'settings';
+
 function App() {
-  const [showAdmin, setShowAdmin] = useState(false);
+  const [page, setPage] = useState<Page>('home');
 
   return (
     <AuthProvider>
-      {showAdmin ? (
-        <AdminShell onExit={() => setShowAdmin(false)} />
+      {page === 'admin' ? (
+        <AdminShell onExit={() => setPage('home')} />
+      ) : page === 'settings' ? (
+        <Settings onBack={() => setPage('home')} />
       ) : (
-        <HomePage onEnterAdmin={() => setShowAdmin(true)} />
+        <HomePage
+          onEnterAdmin={() => setPage('admin')}
+          onOpenSettings={() => setPage('settings')}
+        />
       )}
     </AuthProvider>
   );
