@@ -48,7 +48,7 @@ export function MovieQuotes() {
         {/* Section Title */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-app-border">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-app-gold">行情</h2>
+            <h2 className="text-lg font-bold text-app-gold">竞猜行情</h2>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

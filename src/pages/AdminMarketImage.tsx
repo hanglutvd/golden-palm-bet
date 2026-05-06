@@ -102,7 +102,7 @@ export function AdminMarketImage() {
       <div className="rounded-lg bg-app-card border border-app-border p-4 space-y-5">
         <p className="text-sm text-muted-foreground">
           直接上传场刊评分表图片（JPG/PNG/WEBP，单张不超过 5MB）。
-          首页「行情中心」将显示这些图片。
+          首页「口碑中心」将显示这些图片。
           {hasImages && <span className="text-app-gold ml-1">当前已保存 {images?.length || 0} 张图片</span>}
         </p>
 

@@ -20,7 +20,7 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
 
   const navItems = [
     { label: '竞猜规则', href: '#', onClick: onOpenRules, highlight: true },
-    { label: '行情中心', href: '#', onClick: onOpenMarket },
+    { label: '口碑中心', href: '#', onClick: onOpenMarket },
     { label: '排行榜', href: '#', onClick: onOpenLeaderboard },
     { label: '奖品池', href: '#', onClick: onOpenPrizes },
     ...(isAuthenticated ? [{ label: '我的持仓', href: '#', onClick: onOpenPortfolio }] : []),

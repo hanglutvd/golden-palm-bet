@@ -16,7 +16,7 @@ export function MarketPreview({ onOpenFull }: MarketPreviewProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-app-border">
         <div className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4 text-app-gold" />
-          <h2 className="text-base font-bold text-app-gold">行情中心</h2>
+          <h2 className="text-base font-bold text-app-gold">口碑中心</h2>
         </div>
         <button
           onClick={onOpenFull}
@@ -48,7 +48,7 @@ export function MarketPreview({ onOpenFull }: MarketPreviewProps) {
             {/* Overlay hint */}
             <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <span className="text-xs text-white font-medium px-3 py-1.5 rounded-md bg-app-gold/80">
-                点击查看完整行情
+                点击查看场刊评分
               </span>
             </div>
           </div>
