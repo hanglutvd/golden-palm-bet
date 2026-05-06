@@ -69,7 +69,7 @@ export function MovieQuotes() {
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors bg-app-gold/10 border-app-gold/30 text-app-gold"
           >
             <ArrowUpDown className="h-3.5 w-3.5" />
-            {sortBy === 'price' ? '价格降序' : '首映时间'}
+            {sortBy === 'price' ? '按照首映时间排序' : '按照价格排序'}
           </button>
         </div>
 
@@ -119,7 +119,7 @@ export function MovieQuotes() {
                     className="border-b border-app-border/60 transition-colors duration-200 hover:bg-app-hover group cursor-pointer"
                   >
                     <td className="px-3 py-3 text-sm text-muted-foreground tabular-nums">
-                      {sortBy === 'premiere' ? index + 1 : movie.rank}
+                      {index + 1}
                     </td>
                     <td className="px-3 py-3">
                       <span className="text-sm font-medium text-app-gold transition-colors duration-150 group-hover:underline group-hover:text-app-gold/80">
@@ -187,5 +187,8 @@ export function MovieQuotes() {
         movie={selectedMovie}
       />
     </>
+  );
+}
+  </>
   );
 }
