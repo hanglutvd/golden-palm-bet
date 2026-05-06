@@ -81,7 +81,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
               <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
                 <CalendarCheck className="h-4 w-4 text-app-gold" />
                 <span className="text-sm text-foreground">价格更新时间</span>
-                <span className="text-sm font-bold tabular-nums text-app-gold">下一时段 12:00/18:00</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">09:00 / 15:00 开盘</span>
               </div>
               <div className="px-4 py-2.5">
                 <p className="text-xs text-muted-foreground leading-relaxed">
