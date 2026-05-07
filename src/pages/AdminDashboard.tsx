@@ -103,7 +103,7 @@ export function AdminDashboard() {
           </button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          强制触发一次结算，将当前价格保存为 basePrice。12:00 结算结果在 15:00 展示，18:00 结算结果在次日 09:00 展示。
+          交易时段（09:00-12:00 / 15:00-18:00）内每 10 分钟自动结算一次。价格实时跳动，涨跌幅跟随变动。收盘后冻结。点击可手动触发一次结算。
         </p>
       </div>
 
