@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import { MessageSquare, X, Send, Trash2, Reply } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MessageSquare, X, Send, Trash2, Reply, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/providers/trpc';
+
+const PAGE_SIZE = 20;
+const PREVIEW_COUNT = 10;
 
 export function DiscussPanel() {
   const [open, setOpen] = useState(false);
@@ -12,20 +15,19 @@ export function DiscussPanel() {
     username: string;
     content: string;
   } | null>(null);
-  const [offset, setOffset] = useState(0);
+  const [page, setPage] = useState(0);
   const { isAuthenticated, user } = useAuth();
 
   const utils = trpc.useUtils();
 
-  const PAGE_SIZE = 20;
-  const limit = offset === 0 ? 10 : PAGE_SIZE;
+  // Preview query: always enabled for homepage sync
+  const previewQuery = trpc.comment.list.useQuery({ limit: PREVIEW_COUNT, offset: 0 });
 
-  const { data, isLoading } = trpc.comment.list.useQuery(
-    { limit, offset },
+  // Modal pagination query: only when modal is open
+  const modalQuery = trpc.comment.list.useQuery(
+    { limit: PAGE_SIZE, offset: page * PAGE_SIZE },
     { enabled: open }
   );
-
-  const hasMore = data ? data.total > offset + limit : false;
 
   const createMutation = trpc.comment.create.useMutation({
     onSuccess: () => {
@@ -69,6 +71,17 @@ export function DiscussPanel() {
     setReplyTarget(null);
   };
 
+  const goPrevPage = () => {
+    if (page > 0) setPage(page - 1);
+  };
+
+  const goNextPage = () => {
+    const modalData = modalQuery.data;
+    if (modalData && modalData.total > (page + 1) * PAGE_SIZE) {
+      setPage(page + 1);
+    }
+  };
+
   const formatTime = (date: Date | string) => {
     const d = new Date(date);
     const now = new Date();
@@ -84,12 +97,27 @@ export function DiscussPanel() {
     return d.toLocaleDateString('zh-CN');
   };
 
-  const totalCount = data?.total ?? 0;
-  const comments = data?.items ?? [];
+  const totalCount = previewQuery.data?.total ?? 0;
   const isAdmin = user?.role === 'admin';
+
+  // Which data to show in modal
+  const modalComments = modalQuery.data?.items ?? [];
+  const modalTotal = modalQuery.data?.total ?? 0;
+  const totalPages = Math.ceil(modalTotal / PAGE_SIZE);
+  const hasPrev = page > 0;
+  const hasNext = modalTotal > (page + 1) * PAGE_SIZE;
+
+  // Reset page when modal opens
+  useEffect(() => {
+    if (open) {
+      setPage(0);
+      setReplyTarget(null);
+    }
+  }, [open]);
 
   return (
     <>
+      {/* Collapsed Button - always shows live count */}
       <button
         onClick={() => setOpen(true)}
         className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-app-card border border-app-border hover:bg-app-hover transition-colors group"
@@ -99,10 +127,13 @@ export function DiscussPanel() {
           <span className="text-sm font-medium text-foreground">讨论区</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">{totalCount}条讨论</span>
+          <span className="text-xs text-muted-foreground">
+            {previewQuery.isLoading ? '...' : `${totalCount}条讨论`}
+          </span>
         </div>
       </button>
 
+      {/* Modal */}
       <AnimatePresence>
         {open && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -115,6 +146,7 @@ export function DiscussPanel() {
               transition={{ duration: 0.2 }}
               className="relative w-full max-w-lg max-h-[85vh] overflow-hidden rounded-xl bg-app-card border border-app-border shadow-2xl flex flex-col"
             >
+              {/* Header */}
               <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-app-border bg-app-card/95 backdrop-blur-sm flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <MessageSquare className="h-5 w-5 text-app-gold" />
@@ -128,18 +160,19 @@ export function DiscussPanel() {
                 </button>
               </div>
 
+              {/* Comments List */}
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                {isLoading ? (
+                {modalQuery.isLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin h-5 w-5 border-2 border-app-gold border-t-transparent rounded-full mx-auto" />
                   </div>
-                ) : comments.length === 0 ? (
+                ) : modalComments.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageSquare className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">还没有讨论，来说点什么吧</p>
                   </div>
                 ) : (
-                  comments.map((comment) => (
+                  modalComments.map((comment) => (
                     <div key={comment.id} className="flex gap-3 group">
                       <div className="flex-shrink-0 w-8 h-8 rounded-full bg-app-gold/15 border border-app-gold/30 flex items-center justify-center">
                         <span className="text-xs font-bold text-app-gold">
@@ -190,19 +223,32 @@ export function DiscussPanel() {
                     </div>
                   ))
                 )}
-
-                {/* Load more */}
-                {hasMore && (
-                  <div className="text-center pt-2">
-                    <button
-                      onClick={() => setOffset(offset + limit)}
-                      className="text-xs text-muted-foreground hover:text-app-gold transition-colors"
-                    >
-                      加载更多 ({data?.total} 条)
-                    </button>
-                  </div>
-                )}
               </div>
+
+              {/* Pagination */}
+              {modalTotal > PAGE_SIZE && (
+                <div className="flex items-center justify-center gap-4 px-6 py-2 border-t border-app-border">
+                  <button
+                    onClick={goPrevPage}
+                    disabled={!hasPrev}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-app-gold transition-colors disabled:opacity-30"
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                    上一页
+                  </button>
+                  <span className="text-xs text-muted-foreground">
+                    第 {page + 1} / {totalPages || 1} 页
+                  </span>
+                  <button
+                    onClick={goNextPage}
+                    disabled={!hasNext}
+                    className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-app-gold transition-colors disabled:opacity-30"
+                  >
+                    下一页
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
 
               {/* Input Area */}
               <div className="sticky bottom-0 border-t border-app-border bg-app-card px-6 py-3 flex-shrink-0">
