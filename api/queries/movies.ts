@@ -55,12 +55,12 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
     if (newPrice < 1) newPrice = 1; // floor at 1
   }
 
-  // Save prevPrice as basePrice for change% calculation
+  // Save newPrice as basePrice — settlement price becomes next session's baseline
   await getDb()
     .update(movies)
     .set({
       currentPrice: String(newPrice.toFixed(2)),
-      basePrice: String(prevPrice.toFixed(2)),
+      basePrice: String(newPrice.toFixed(2)),
       dailyNetVolume: 0,
       lastOpenDate: settlementKey,
       updatedAt: new Date(),
@@ -70,7 +70,7 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   return {
     ...movie,
     currentPrice: String(newPrice.toFixed(2)),
-    basePrice: String(prevPrice.toFixed(2)),
+    basePrice: String(newPrice.toFixed(2)),
     dailyNetVolume: 0,
     lastOpenDate: settlementKey,
   };
@@ -105,7 +105,7 @@ export async function openMarketForAll(session?: "am" | "pm") {
       .update(movies)
       .set({
         currentPrice: String(newPrice.toFixed(2)),
-        basePrice: String(prevPrice.toFixed(2)),
+        basePrice: String(newPrice.toFixed(2)),
         dailyNetVolume: 0,
         lastOpenDate: settlementKey,
         updatedAt: new Date(),

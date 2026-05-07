@@ -172,7 +172,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground">较基准价</p>
+              <p className="text-xs text-muted-foreground">较开盘价</p>
               <div className="flex items-center justify-end gap-1">
                 {isUp && <TrendingUp className="h-4 w-4 text-app-green" />}
                 {isDown && <TrendingDown className="h-4 w-4 text-app-red" />}
