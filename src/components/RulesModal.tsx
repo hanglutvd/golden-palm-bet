@@ -98,7 +98,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
               <h3 className="text-sm font-semibold text-foreground">每日行情交易</h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed pl-6">
-              每部电影的价格每时段更新一次。交易时段内买入/卖出仅改变您的持仓与余额，不影响实时价格。系统会在 12:00 和 18:00 收盘时，根据本时段净成交量（买入股数 − 卖出股数）统一调整下一时段开盘价——每净买入 1 股价格 +0.2%，每净卖出 1 股价格 −0.2%。
+              每部电影的价格每时段更新一次。交易时段内买入/卖出仅改变您的持仓与余额，不影响实时价格。系统会在 12:00 和 18:00 收盘时，根据本时段净成交量（买入股数 − 卖出股数）统一调整下一时段开盘价。
             </p>
           </div>
 
