@@ -32,35 +32,36 @@ function getSettlementKey(today: string, session: string) {
 }
 
 /**
- * Open the market for a single movie (lazy fallback):
- * - If current session has not been settled, apply accumulated dailyNetVolume
+ * Open the market for a single movie (called when first trade of session happens):
+ * - Apply any accumulated dailyNetVolume from previous session
+ * - Set basePrice = prevPrice (change% reflects latest settlement movement)
  * - Reset dailyNetVolume to 0
- * - Set lastOpenDate to current session key (YYYY-MM-DD-am/pm)
+ * - Set lastOpenDate to current session key
  */
 export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   const today = getBeijingDateStr();
   const session = getBeijingHour() < 15 ? "am" : "pm";
   const settlementKey = getSettlementKey(today, session);
 
-  // Exact match: if lastOpenDate equals expected session key, already settled
-  if (movie.lastOpenDate === settlementKey) return movie;
+  // Check if this session is already opened (lastOpenDate starts with "YYYY-MM-DD-am" or "YYYY-MM-DD-pm")
+  if (movie.lastOpenDate?.startsWith(settlementKey)) return movie;
 
   const prevPrice = Number(movie.currentPrice);
   const netVolume = Number(movie.dailyNetVolume);
   let newPrice = prevPrice;
 
   if (netVolume !== 0) {
-    // Apply net volume impact: +0.2% per net share
+    // Apply net volume impact: +0.5% per net share
     newPrice = newPrice * (1 + netVolume * 0.005);
     if (newPrice < 1) newPrice = 1; // floor at 1
   }
 
-  // Save newPrice as basePrice — settlement price becomes next session's baseline
+  // basePrice = prevPrice: change% reflects latest settlement movement
   await getDb()
     .update(movies)
     .set({
       currentPrice: String(newPrice.toFixed(2)),
-      basePrice: String(newPrice.toFixed(2)),
+      basePrice: String(prevPrice.toFixed(2)),
       dailyNetVolume: 0,
       lastOpenDate: settlementKey,
       updatedAt: new Date(),
@@ -70,27 +71,31 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   return {
     ...movie,
     currentPrice: String(newPrice.toFixed(2)),
-    basePrice: String(newPrice.toFixed(2)),
+    basePrice: String(prevPrice.toFixed(2)),
     dailyNetVolume: 0,
     lastOpenDate: settlementKey,
   };
 }
 
 /**
- * Batch settlement for all movies (cron-triggered at 12:00 and 18:00):
- * - 12:00 结算上午交易，标记为 YYYY-MM-DD-am，15:00 开盘时展示新价格
- * - 18:00 结算下午交易，标记为 YYYY-MM-DD-pm，次日 09:00 开盘时展示新价格
+ * Periodic settlement every 10 minutes during trading hours:
+ * - Apply current session's netVolume to adjust currentPrice
+ * - basePrice = prevPrice (updated every settlement, change% tracks 10-min movement)
+ * - Reset dailyNetVolume to 0 for next 10-minute window
+ * - settlementKey includes hour:minute to allow multiple settlements per session
  */
-export async function openMarketForAll(session?: "am" | "pm") {
+export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
   const today = getBeijingDateStr();
   const nowHour = getBeijingHour();
+  const nowMinute = new Date().getMinutes();
   const sessionKey = session || (nowHour < 15 ? "am" : "pm");
-  const settlementKey = getSettlementKey(today, sessionKey);
+  // Include hour:minute in settlement key to allow multiple settlements per session
+  const settlementKey = `${today}-${sessionKey}-${nowHour}:${nowMinute}`;
 
   const all = await findAllMovies();
 
   for (const movie of all) {
-    if (movie.lastOpenDate === settlementKey) continue; // already settled for this session
+    if (!force && movie.lastOpenDate === settlementKey) continue; // already settled for this window
 
     const prevPrice = Number(movie.currentPrice);
     const netVolume = Number(movie.dailyNetVolume);
@@ -101,11 +106,12 @@ export async function openMarketForAll(session?: "am" | "pm") {
       if (newPrice < 1) newPrice = 1;
     }
 
+    // basePrice = prevPrice: change% reflects the latest 10-minute settlement movement
     await getDb()
       .update(movies)
       .set({
         currentPrice: String(newPrice.toFixed(2)),
-        basePrice: String(newPrice.toFixed(2)),
+        basePrice: String(prevPrice.toFixed(2)),
         dailyNetVolume: 0,
         lastOpenDate: settlementKey,
         updatedAt: new Date(),

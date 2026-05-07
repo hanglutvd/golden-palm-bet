@@ -20,10 +20,12 @@ export function DiscussPanel() {
 
   const utils = trpc.useUtils();
 
-  // Preview query: always enabled for homepage sync
-  const previewQuery = trpc.comment.list.useQuery({ limit: PREVIEW_COUNT, offset: 0 });
+  // Preview query: always enabled, shows latest 10 on homepage
+  const previewQuery = trpc.comment.list.useQuery(
+    { limit: PREVIEW_COUNT, offset: 0 }
+  );
 
-  // Modal pagination query: only when modal is open
+  // Modal pagination query
   const modalQuery = trpc.comment.list.useQuery(
     { limit: PAGE_SIZE, offset: page * PAGE_SIZE },
     { enabled: open }
@@ -65,6 +67,7 @@ export function DiscussPanel() {
 
   const handleReply = (comment: { id: number; username: string; content: string }) => {
     setReplyTarget({ id: comment.id, username: comment.username, content: comment.content });
+    setOpen(true);
   };
 
   const cancelReply = () => {
@@ -98,42 +101,91 @@ export function DiscussPanel() {
   };
 
   const totalCount = previewQuery.data?.total ?? 0;
+  const previewComments = previewQuery.data?.items ?? [];
   const isAdmin = user?.role === 'admin';
 
-  // Which data to show in modal
+  // Modal data
   const modalComments = modalQuery.data?.items ?? [];
   const modalTotal = modalQuery.data?.total ?? 0;
   const totalPages = Math.ceil(modalTotal / PAGE_SIZE);
-  const hasPrev = page > 0;
   const hasNext = modalTotal > (page + 1) * PAGE_SIZE;
 
-  // Reset page when modal opens
   useEffect(() => {
     if (open) {
       setPage(0);
-      setReplyTarget(null);
     }
   }, [open]);
 
   return (
     <>
-      {/* Collapsed Button - always shows live count */}
-      <button
-        onClick={() => setOpen(true)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-app-card border border-app-border hover:bg-app-hover transition-colors group"
-      >
-        <div className="flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-app-gold" />
-          <span className="text-sm font-medium text-foreground">讨论区</span>
-        </div>
-        <div className="flex items-center gap-1.5">
+      {/* Inline Preview on Homepage */}
+      <div className="rounded-lg border border-app-border overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 bg-app-card border-b border-app-border">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4 text-app-gold" />
+            <span className="text-sm font-medium text-foreground">讨论区</span>
+          </div>
           <span className="text-xs text-muted-foreground">
-            {previewQuery.isLoading ? '...' : `${totalCount}条讨论`}
+            {totalCount} 条讨论
           </span>
         </div>
-      </button>
 
-      {/* Modal */}
+        <div className="divide-y divide-app-border/40">
+          {previewQuery.isLoading ? (
+            <div className="px-4 py-4 text-center">
+              <div className="animate-spin h-4 w-4 border-2 border-app-gold border-t-transparent rounded-full mx-auto" />
+            </div>
+          ) : previewComments.length === 0 ? (
+            <div className="px-4 py-4 text-center">
+              <p className="text-xs text-muted-foreground">还没有讨论，来说点什么吧</p>
+            </div>
+          ) : (
+            previewComments.map((comment) => (
+              <div key={comment.id} className="flex gap-2.5 px-4 py-2.5 group hover:bg-app-hover/50 transition-colors">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-app-gold/15 border border-app-gold/30 flex items-center justify-center mt-0.5">
+                  <span className="text-[10px] font-bold text-app-gold">
+                    {comment.username.charAt(0)}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-xs font-medium text-foreground">{comment.username}</span>
+                    <span className="text-[10px] text-muted-foreground">{formatTime(comment.createdAt)}</span>
+                  </div>
+                  {comment.replyTo && comment.replyToUsername && (
+                    <p className="text-[10px] text-muted-foreground truncate mb-0.5">
+                      回复 <span className="text-app-gold">{comment.replyToUsername}</span>：{comment.replyToContent}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground leading-relaxed break-words line-clamp-2">{comment.content}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Show more button */}
+        {totalCount > PREVIEW_COUNT && (
+          <button
+            onClick={() => setOpen(true)}
+            className="w-full px-4 py-2.5 text-xs text-muted-foreground hover:text-app-gold hover:bg-app-hover/50 transition-colors border-t border-app-border/40"
+          >
+            查看更多 ({totalCount} 条)
+          </button>
+        )}
+
+        {/* Quick reply button */}
+        {isAuthenticated && previewComments.length > 0 && (
+          <button
+            onClick={() => setOpen(true)}
+            className="w-full px-4 py-2 text-xs text-app-gold hover:bg-app-gold/5 transition-colors border-t border-app-border/40"
+          >
+            参与讨论...
+          </button>
+        )}
+      </div>
+
+      {/* Full Modal */}
       <AnimatePresence>
         {open && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -169,7 +221,7 @@ export function DiscussPanel() {
                 ) : modalComments.length === 0 ? (
                   <div className="text-center py-8">
                     <MessageSquare className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">还没有讨论，来说点什么吧</p>
+                    <p className="text-sm text-muted-foreground">还没有讨论</p>
                   </div>
                 ) : (
                   modalComments.map((comment) => (
@@ -186,19 +238,16 @@ export function DiscussPanel() {
                           {isAdmin && (
                             <button
                               onClick={() => {
-                                if (confirm('确定删除这条评论？')) {
+                                if (confirm('确定删除？')) {
                                   deleteMutation.mutate({ id: comment.id });
                                 }
                               }}
                               className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-muted-foreground hover:text-app-red transition-all"
-                              title="删除"
                             >
                               <Trash2 className="h-3 w-3" />
                             </button>
                           )}
                         </div>
-
-                        {/* Quoted reply */}
                         {comment.replyTo && comment.replyToUsername && (
                           <div className="mb-1.5 pl-2 border-l-2 border-app-gold/30 rounded">
                             <p className="text-[11px] text-muted-foreground truncate">
@@ -206,10 +255,7 @@ export function DiscussPanel() {
                             </p>
                           </div>
                         )}
-
                         <p className="text-sm text-muted-foreground leading-relaxed break-words">{comment.content}</p>
-
-                        {/* Reply button */}
                         {isAuthenticated && (
                           <button
                             onClick={() => handleReply({ id: comment.id, username: comment.username, content: comment.content })}
@@ -230,7 +276,7 @@ export function DiscussPanel() {
                 <div className="flex items-center justify-center gap-4 px-6 py-2 border-t border-app-border">
                   <button
                     onClick={goPrevPage}
-                    disabled={!hasPrev}
+                    disabled={page <= 0}
                     className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-app-gold transition-colors disabled:opacity-30"
                   >
                     <ChevronLeft className="h-3 w-3" />
@@ -250,9 +296,8 @@ export function DiscussPanel() {
                 </div>
               )}
 
-              {/* Input Area */}
+              {/* Input */}
               <div className="sticky bottom-0 border-t border-app-border bg-app-card px-6 py-3 flex-shrink-0">
-                {/* Reply target indicator */}
                 {replyTarget && (
                   <div className="flex items-center justify-between mb-2 px-2 py-1 rounded bg-app-gold/5 border border-app-gold/20">
                     <span className="text-[11px] text-app-gold truncate">
@@ -263,7 +308,6 @@ export function DiscussPanel() {
                     </button>
                   </div>
                 )}
-
                 {isAuthenticated ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -279,7 +323,6 @@ export function DiscussPanel() {
                       onClick={handleSend}
                       disabled={!input.trim() || createMutation.isPending}
                       className="p-2 rounded-md bg-app-gold/10 text-app-gold hover:bg-app-gold/20 transition-colors disabled:opacity-50"
-                      title="发送"
                     >
                       <Send className="h-4 w-4" />
                     </button>
