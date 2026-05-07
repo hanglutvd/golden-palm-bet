@@ -1,40 +1,67 @@
 import { useState } from 'react';
-import { MessageSquare, X, Send } from 'lucide-react';
+import { MessageSquare, X, Send, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-
-interface Comment {
-  id: number;
-  username: string;
-  content: string;
-  createdAt: string;
-}
-
-const sampleComments: Comment[] = [
-  {
-    id: 1,
-    username: '电影爱好者',
-    content: '我觉得《盒子里的羊》是枝裕和这次可能又会打动评审团',
-    createdAt: '2026-05-07 14:30',
-  },
-  {
-    id: 2,
-    username: '戛纳老粉',
-    content: '阿莫多瓦的《苦涩的圣诞节》题材很有趣，期待首映',
-    createdAt: '2026-05-07 12:15',
-  },
-  {
-    id: 3,
-    username: 'NewWave',
-    content: '滨口龙介《突如其来》已经买入20股，看好！',
-    createdAt: '2026-05-07 10:22',
-  },
-];
+import { trpc } from '@/providers/trpc';
 
 export function DiscussPanel() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+
+  const utils = trpc.useUtils();
+
+  const { data, isLoading } = trpc.comment.list.useQuery(
+    { limit: 50, offset: 0 },
+    { enabled: open }
+  );
+
+  const createMutation = trpc.comment.create.useMutation({
+    onSuccess: () => {
+      setInput('');
+      utils.comment.list.invalidate();
+    },
+    onError: (err) => {
+      alert(err.message || '发送失败');
+    },
+  });
+
+  const deleteMutation = trpc.comment.delete.useMutation({
+    onSuccess: () => {
+      utils.comment.list.invalidate();
+    },
+  });
+
+  const handleSend = () => {
+    if (!input.trim()) return;
+    createMutation.mutate({ content: input.trim() });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const formatTime = (date: Date | string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    if (hours < 24) return `${hours}小时前`;
+    if (days < 30) return `${days}天前`;
+    return d.toLocaleDateString('zh-CN');
+  };
+
+  const totalCount = data?.total ?? 0;
+  const comments = data?.items ?? [];
+  const isAdmin = user?.role === 'admin';
 
   return (
     <>
@@ -48,7 +75,7 @@ export function DiscussPanel() {
           <span className="text-sm font-medium text-foreground">讨论区</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">{sampleComments.length}条讨论</span>
+          <span className="text-xs text-muted-foreground">{totalCount}条讨论</span>
         </div>
       </button>
 
@@ -81,27 +108,46 @@ export function DiscussPanel() {
 
               {/* Comments List */}
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                {sampleComments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-app-gold/15 border border-app-gold/30 flex items-center justify-center">
-                      <span className="text-xs font-bold text-app-gold">
-                        {comment.username.charAt(0)}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-foreground">{comment.username}</span>
-                        <span className="text-[11px] text-muted-foreground">{comment.createdAt}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{comment.content}</p>
-                    </div>
+                {isLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin h-5 w-5 border-2 border-app-gold border-t-transparent rounded-full mx-auto" />
                   </div>
-                ))}
-
-                {/* Placeholder for more */}
-                <div className="text-center py-4">
-                  <p className="text-xs text-muted-foreground">更多讨论即将开放</p>
-                </div>
+                ) : comments.length === 0 ? (
+                  <div className="text-center py-8">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">还没有讨论，来说点什么吧</p>
+                  </div>
+                ) : (
+                  comments.map((comment) => (
+                    <div key={comment.id} className="flex gap-3 group">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-app-gold/15 border border-app-gold/30 flex items-center justify-center">
+                        <span className="text-xs font-bold text-app-gold">
+                          {comment.username.charAt(0)}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-foreground">{comment.username}</span>
+                          <span className="text-[11px] text-muted-foreground">{formatTime(comment.createdAt)}</span>
+                          {isAdmin && (
+                            <button
+                              onClick={() => {
+                                if (confirm('确定删除这条评论？')) {
+                                  deleteMutation.mutate({ id: comment.id });
+                                }
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-0.5 rounded text-muted-foreground hover:text-app-red transition-all"
+                              title="删除"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed break-words">{comment.content}</p>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Input Area */}
@@ -112,12 +158,15 @@ export function DiscussPanel() {
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
                       placeholder="发表你的看法..."
                       maxLength={300}
                       className="flex-1 bg-app-bg border border-app-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-app-gold/50"
                     />
                     <button
-                      className="p-2 rounded-md bg-app-gold/10 text-app-gold hover:bg-app-gold/20 transition-colors"
+                      onClick={handleSend}
+                      disabled={!input.trim() || createMutation.isPending}
+                      className="p-2 rounded-md bg-app-gold/10 text-app-gold hover:bg-app-gold/20 transition-colors disabled:opacity-50"
                       title="发送"
                     >
                       <Send className="h-4 w-4" />
@@ -125,6 +174,9 @@ export function DiscussPanel() {
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground text-center">登录后即可参与讨论</p>
+                )}
+                {input.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground text-right mt-1">{input.length}/300</p>
                 )}
               </div>
             </motion.div>

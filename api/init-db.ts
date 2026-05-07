@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { getDb } from "./queries/connection.js";
 import { seedMovies } from "./queries/movies.js";
 
@@ -7,13 +5,6 @@ let initialized = false;
 
 export function initDatabase() {
   if (initialized) return;
-
-  // Ensure data directory exists (for Railway volume mount)
-  const dbPath = process.env.DB_PATH || "/data/data.sqlite";
-  const dbDir = path.dirname(dbPath);
-  if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-  }
 
   const db = getDb();
 
@@ -104,6 +95,17 @@ export function initDatabase() {
     db.run(`ALTER TABLE diaries ADD COLUMN cover_image_3 TEXT`);
   } catch { /* already exists */ }
 
+  // Comments table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS comments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      username TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+
   // Site config table
   db.run(`
     CREATE TABLE IF NOT EXISTS site_config (
@@ -117,5 +119,5 @@ export function initDatabase() {
   seedMovies();
 
   initialized = true;
-  console.log("[init-db] Database initialized at", dbPath);
+  console.log("[init-db] Database initialized");
 }

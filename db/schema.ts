@@ -62,6 +62,14 @@ export const diaries = sqliteTable("diaries", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
+export const comments = sqliteTable("comments", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull(),
+  username: text("username").notNull(),
+  content: text("content").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+});
+
 export const siteConfig = sqliteTable("site_config", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
@@ -74,3 +82,4 @@ export type Movie = typeof movies.$inferSelect;
 export type Holding = typeof holdings.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Diary = typeof diaries.$inferInsert;
+export type Comment = typeof comments.$inferSelect;

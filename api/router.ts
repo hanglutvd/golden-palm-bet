@@ -6,6 +6,7 @@ import { tradingRouter } from "./tradingRouter.js";
 import { diaryRouter } from "./diaryRouter.js";
 import { adminRouter } from "./adminRouter.js";
 import { configRouter } from "./configRouter.js";
+import { commentRouter } from "./commentRouter.js";
 
 export const appRouter = createRouter({
   ping: publicQuery.query(() => ({ ok: true, ts: Date.now() })),
@@ -16,6 +17,7 @@ export const appRouter = createRouter({
   diary: diaryRouter,
   admin: adminRouter,
   config: configRouter,
+  comment: commentRouter,
 });
 
 export type AppRouter = typeof appRouter;
