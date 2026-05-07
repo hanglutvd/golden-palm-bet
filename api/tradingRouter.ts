@@ -12,7 +12,11 @@ import { eq, and, desc } from "drizzle-orm";
 
 const MAX_HOLDING_PER_MOVIE = 20;
 
-async function checkSessionTradeLimit(userId: number, movieId: number) {
+async function checkSessionTradeLimit(
+  userId: number,
+  movieId: number,
+  tradeType: "buy" | "sell"
+) {
   const session = getCurrentSession();
   if (!session) {
     throw new Error("当前为非交易时段");
@@ -20,7 +24,7 @@ async function checkSessionTradeLimit(userId: number, movieId: number) {
 
   const today = getBeijingDateStr();
 
-  // Check if user already traded this movie in current session
+  // Check if user already did this trade type on this movie in current session
   const existing = await getDb()
     .select()
     .from(transactions)
@@ -28,7 +32,8 @@ async function checkSessionTradeLimit(userId: number, movieId: number) {
       and(
         eq(transactions.userId, userId),
         eq(transactions.movieId, movieId),
-        eq(transactions.session, session)
+        eq(transactions.session, session),
+        eq(transactions.type, tradeType)
       )
     );
 
@@ -42,7 +47,10 @@ async function checkSessionTradeLimit(userId: number, movieId: number) {
 
   if (todayTrades.length > 0) {
     const sessionLabel = session === "am" ? "上午" : "下午";
-    throw new Error(`本${sessionLabel}时段已交易过该电影，请等待下个时段（${session === "am" ? "15:00" : "明日09:00"}）`);
+    const typeLabel = tradeType === "buy" ? "买入" : "卖出";
+    throw new Error(
+      `本${sessionLabel}时段已${typeLabel}过该电影，不可重复${typeLabel}（${session === "am" ? "15:00" : "明日09:00"}后可再次操作）`
+    );
   }
 
   return session;
@@ -64,8 +72,8 @@ export const tradingRouter = createRouter({
       const movie = await findMovieById(input.movieId);
       if (!movie) throw new Error("电影不存在");
 
-      // Check session trade limit
-      const session = await checkSessionTradeLimit(user.id, input.movieId);
+      // Check session trade limit (buy: can buy once per movie per session)
+      const session = await checkSessionTradeLimit(user.id, input.movieId, "buy");
 
       const price = Number(movie.currentPrice);
       const totalCost = price * input.quantity;
@@ -133,8 +141,8 @@ export const tradingRouter = createRouter({
       const movie = await findMovieById(input.movieId);
       if (!movie) throw new Error("电影不存在");
 
-      // Check session trade limit
-      const session = await checkSessionTradeLimit(user.id, input.movieId);
+      // Check session trade limit (sell: can sell once per movie per session)
+      const session = await checkSessionTradeLimit(user.id, input.movieId, "sell");
 
       const holding = await findHolding(user.id, input.movieId);
       if (!holding || Number(holding.quantity) < input.quantity) {

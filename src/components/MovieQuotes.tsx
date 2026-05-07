@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TrendingUp, TrendingDown, Minus, Info, ArrowUpDown, CalendarDays } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Info, ArrowUpDown, CalendarDays, Flame } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { trpc } from '@/providers/trpc';
 import { movieQuotes } from '@/data/movieData';
@@ -11,6 +11,11 @@ export function MovieQuotes() {
   const [sortBy, setSortBy] = useState<'price' | 'premiere'>('price');
 
   const { data: apiMovies, isLoading } = trpc.movie.list.useQuery(undefined, {
+    refetchOnWindowFocus: true,
+    retry: 1,
+  });
+
+  const { data: heatData } = trpc.movie.marketHeat.useQuery(undefined, {
     refetchOnWindowFocus: true,
     retry: 1,
   });
@@ -84,6 +89,9 @@ export function MovieQuotes() {
                 <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   电影名称
                 </th>
+                <th className="px-3 py-2.5 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden md:table-cell w-20">
+                  热度
+                </th>
                 <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground hidden sm:table-cell w-36">
                   导演
                 </th>
@@ -125,6 +133,14 @@ export function MovieQuotes() {
                       <span className="text-sm font-medium text-app-gold transition-colors duration-150 group-hover:underline group-hover:text-app-gold/80">
                         {movie.name}
                       </span>
+                    </td>
+                    <td className="px-3 py-3 text-right hidden md:table-cell">
+                      <div className="flex items-center justify-end gap-1 text-muted-foreground">
+                        <Flame className="h-3 w-3 text-app-red/60" />
+                        <span className="text-xs tabular-nums">
+                          {heatData?.find(h => h.movieName === movie.name)?.holderCount || 0}人
+                        </span>
+                      </div>
                     </td>
                     <td className="px-3 py-3 text-sm text-muted-foreground hidden sm:table-cell">
                       {movie.director}

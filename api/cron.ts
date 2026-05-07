@@ -1,53 +1,32 @@
 import { getBeijingTime, getBeijingDateStr } from "../contracts/market.js";
 import { openMarketForAll } from "./queries/movies.js";
 
+const SETTLEMENT_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+
 /**
- * Schedule settlement cron: twice daily at 12:00 and 18:00 Beijing Time
- * - 12:00 结算上午交易 (session: 'am') → 15:00 开盘展示新价格
- * - 18:00 结算下午交易 (session: 'pm') → 次日 09:00 开盘展示新价格
- * Uses setTimeout so it works in Railway containers (no system cron needed)
+ * Settlement cron: every 10 minutes during trading hours
+ * - Trading hours: 09:00-12:00, 15:00-18:00 Beijing Time
+ * - Sensitivity: 0.5% per net share (was 0.2%)
+ * - dailyNetVolume reset to 0 after each settlement
+ * - Price updates in real-time, creating a lively market feel
  */
 export function startDailySettlementCron() {
   const scheduleNext = () => {
     const now = new Date();
-    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-    const beijing = new Date(utc + 8 * 3600000);
+    const msUntil = getMsUntilNextSettlement();
 
-    const hour = beijing.getHours();
-    let target: Date;
-    let session: "am" | "pm";
-
-    if (hour < 12) {
-      // Before noon, schedule for 12:00 (AM settlement)
-      target = new Date(beijing);
-      target.setHours(12, 0, 0, 0);
-      session = "am";
-    } else if (hour < 18) {
-      // Before evening, schedule for 18:00 (PM settlement)
-      target = new Date(beijing);
-      target.setHours(18, 0, 0, 0);
-      session = "pm";
-    } else {
-      // After evening close, schedule for tomorrow 12:00 (AM settlement)
-      target = new Date(beijing);
-      target.setDate(target.getDate() + 1);
-      target.setHours(12, 0, 0, 0);
-      session = "am";
+    if (msUntil === null) {
+      // Outside trading hours, check again in 1 minute
+      console.log("[cron] Outside trading hours, rechecking in 1m...");
+      setTimeout(scheduleNext, 60 * 1000);
+      return;
     }
 
-    // Convert back to local server time for setTimeout
-    const targetUtc = new Date(target.getTime() - 8 * 3600000);
-    const msUntil = targetUtc.getTime() - now.getTime();
-
-    const bjStr = `${target.getMonth() + 1}月${target.getDate()}日 ${target.getHours().toString().padStart(2, "0")}:00`;
-    const hoursUntil = Math.round(msUntil / 3600000);
-    console.log(
-      `[cron] Next settlement scheduled: ${bjStr} session=${session} (in ${hoursUntil}h)`
-    );
+    const minutesUntil = Math.round(msUntil / 60000);
+    console.log(`[cron] Next settlement in ${minutesUntil}m`);
 
     setTimeout(() => {
-      runDailySettlement(session);
-      // Schedule next one after this runs
+      runSettlement();
       scheduleNext();
     }, msUntil);
   };
@@ -55,13 +34,80 @@ export function startDailySettlementCron() {
   scheduleNext();
 }
 
-async function runDailySettlement(session: "am" | "pm") {
+/**
+ * Calculate milliseconds until the next 10-minute boundary within trading hours.
+ * Trading hours: 09:00-12:00 and 15:00-18:00 Beijing Time
+ * Returns null if currently outside trading hours.
+ */
+function getMsUntilNextSettlement(): number | null {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const beijing = new Date(utc + 8 * 3600000);
+  const hour = beijing.getHours();
+  const minute = beijing.getMinutes();
+  const second = beijing.getSeconds();
+  const ms = beijing.getMilliseconds();
+
+  // Convert current Beijing time to minutes since midnight
+  const currentMinutes = hour * 60 + minute;
+
+  // Morning session: 09:00-12:00 (540-720)
+  // Afternoon session: 15:00-18:00 (900-1080)
+  const isTrading =
+    (currentMinutes >= 540 && currentMinutes < 720) ||
+    (currentMinutes >= 900 && currentMinutes < 1080);
+
+  if (!isTrading) {
+    return null;
+  }
+
+  // Find next 10-minute boundary: :00, :10, :20, :30, :40, :50
+  const nextBoundaryMinute = Math.ceil((minute + 1) / 10) * 10;
+  let targetHour = hour;
+  let targetMinute = nextBoundaryMinute;
+
+  if (targetMinute >= 60) {
+    targetHour += 1;
+    targetMinute = 0;
+  }
+
+  // Check if the next boundary is still within trading hours
+  const targetMinutes = targetHour * 60 + targetMinute;
+  const morningEnd = 720;   // 12:00
+  const afternoonEnd = 1080; // 18:00
+
+  if (currentMinutes < morningEnd && targetMinutes > morningEnd) {
+    // Next boundary crosses into lunch break, skip to afternoon session
+    return null; // Will recheck after lunch
+  }
+  if (currentMinutes < afternoonEnd && targetMinutes > afternoonEnd) {
+    // Next boundary crosses afternoon close
+    return null;
+  }
+
+  // Calculate milliseconds until next boundary
+  const targetBeijing = new Date(beijing);
+  targetBeijing.setHours(targetHour, targetMinute, 0, 0);
+
+  const targetUtc = new Date(targetBeijing.getTime() - 8 * 3600000);
+  return targetUtc.getTime() - now.getTime();
+}
+
+async function runSettlement() {
   try {
-    const today = getBeijingDateStr();
-    console.log(`[cron] Running ${session} settlement for ${today}...`);
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const beijing = new Date(utc + 8 * 3600000);
+    const hour = beijing.getHours();
+    const minute = beijing.getMinutes();
+
+    const session = hour < 15 ? "am" : "pm";
+    const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+
+    console.log(`[cron] Settlement at ${timeStr} (session=${session})...`);
     await openMarketForAll(session);
-    console.log(`[cron] ${session} settlement completed for ${today}`);
+    console.log(`[cron] Settlement completed at ${timeStr}`);
   } catch (err: any) {
-    console.error(`[cron] ${session} settlement failed:`, err.message);
+    console.error(`[cron] Settlement failed:`, err.message);
   }
 }

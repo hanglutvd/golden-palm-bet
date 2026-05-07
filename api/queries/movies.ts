@@ -51,7 +51,7 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
 
   if (netVolume !== 0) {
     // Apply net volume impact: +0.2% per net share
-    newPrice = newPrice * (1 + netVolume * 0.002);
+    newPrice = newPrice * (1 + netVolume * 0.005);
     if (newPrice < 1) newPrice = 1; // floor at 1
   }
 
@@ -97,7 +97,7 @@ export async function openMarketForAll(session?: "am" | "pm") {
     let newPrice = prevPrice;
 
     if (netVolume !== 0) {
-      newPrice = newPrice * (1 + netVolume * 0.002);
+      newPrice = newPrice * (1 + netVolume * 0.005);
       if (newPrice < 1) newPrice = 1;
     }
 
