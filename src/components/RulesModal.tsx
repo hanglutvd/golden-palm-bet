@@ -58,9 +58,14 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
                 <span className="text-sm text-foreground">所有电影初始统一价格</span>
                 <span className="text-sm font-bold tabular-nums text-app-gold"><GameCoin amount={100} /></span>
               </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <DollarSign className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">每人每部电影持股上限</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">20股</span>
+              </div>
               <div className="px-4 py-2.5">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  本金 3,000，每股 100，交易时段 09:00-12:00 / 15:00-18:00（北京时间）。请谨慎决策——All in 搏大奖还是分散押注降低风险？
+                  本金3,000，每股100，请谨慎决策——All in搏大奖还是分散押注降低风险？
                 </p>
               </div>
             </div>
@@ -74,35 +79,64 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
             </div>
             <div className="divide-y divide-app-border/60">
               <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
-                <TrendingUp className="h-4 w-4 text-app-green" />
-                <span className="text-sm text-foreground">每日交易时段</span>
-                <span className="text-sm font-bold tabular-nums text-app-green">09:00-12:00 / 15:00-18:00</span>
+                <TrendingUp className="h-4 w-4 text-app-red" />
+                <span className="text-sm text-foreground">每日交易时段（北京时间）</span>
+                <span className="text-sm font-bold tabular-nums text-app-red">09:00-12:00 / 15:00-18:00</span>
               </div>
               <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
                 <CalendarCheck className="h-4 w-4 text-app-gold" />
-                <span className="text-sm text-foreground">价格更新时间</span>
-                <span className="text-sm font-bold tabular-nums text-app-gold">09:00 / 15:00 开盘</span>
+                <span className="text-sm text-foreground">价格结算频率</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">每10分钟</span>
               </div>
               <div className="px-4 py-2.5">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  交易时段内可自由买入/卖出，价格保持不变。12:00 和 18:00 收盘时分别根据本时段净成交量统一调整下一时段开盘价。
+                  上午12:00收盘后调整下午15:00开盘价，下午18:00收盘后调整次日09:00开盘价。
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Rule 2: Price Mechanism */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-app-green" />
-              <h3 className="text-sm font-semibold text-foreground">每日行情交易</h3>
+          {/* Rule 2: Trading Limit */}
+          <div className="rounded-lg border border-app-border overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-app-bg/60 border-b border-app-border">
+              <TrendingUp className="h-4 w-4 text-app-red" />
+              <h3 className="text-sm font-semibold text-foreground">交易次数</h3>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed pl-6">
-              每部电影的价格每时段更新一次。交易时段内买入/卖出仅改变您的持仓与余额，不影响实时价格。系统会在 12:00 和 18:00 收盘时，根据本时段净成交量（买入股数 − 卖出股数）统一调整下一时段开盘价。
-            </p>
+            <div className="divide-y divide-app-border/60">
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <DollarSign className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">每部电影每时段可买入</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">1次</span>
+              </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <DollarSign className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">每部电影每时段可卖出</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">1次</span>
+              </div>
+              <div className="px-4 py-2.5">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  买入和卖出独立计算，不可重复。例如上午时段可以买入1次后再卖出1次，但不能买入2次。
+                </p>
+              </div>
+            </div>
           </div>
 
-          {/* Rule 3: Dividends */}
+          {/* Rule 3: Price Mechanism */}
+          <div className="rounded-lg border border-app-border overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-app-bg/60 border-b border-app-border">
+              <TrendingUp className="h-4 w-4 text-app-red" />
+              <h3 className="text-sm font-semibold text-foreground">价格机制</h3>
+            </div>
+            <div className="divide-y divide-app-border/60">
+              <div className="px-4 py-3">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  交易时段内价格锁定不变，买入/卖出仅改变您的持仓与余额。每10分钟根据该时段累计净成交量统一调整下一时段开盘价。涨跌幅反映从上一次结算价到当前的变化。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Rule 4: Dividends */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Trophy className="h-4 w-4 text-app-gold" />
@@ -113,7 +147,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
             </p>
           </div>
 
-          {/* Rule 4: Dividend Table */}
+          {/* Rule 5: Dividend Table */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-app-gold" />
@@ -167,7 +201,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
           {/* Tips */}
           <div className="rounded-lg bg-app-gold/5 border border-app-gold/20 p-4">
             <p className="text-sm text-app-gold leading-relaxed">
-              <strong>策略提示：</strong>本金 3,000，每股 100，交易时段 09:00-12:00 / 15:00-18:00。每部电影每个时段限交易一次（上午一次 + 下午一次），每人每部电影最多持有 20 股。明智的玩家会把握交易窗口集中押注金棕榈热门博取最高回报，或分散押注多部影片降低风险。每个交易时段内价格锁定，您可以在观察市场动向后再决定是否出手。密切关注每日分析文章和口碑走势，在预期上涨前买入、预期下跌前卖出，同时保留部分股份等待最终颁奖结果获取分红。祝你好运！
+              <strong>策略提示：</strong>本金3,000，每股100，交易时段09:00-12:00 / 15:00-18:00。每部电影每时段限买入1次、限卖出1次，每人每部电影最多持有20股。明智的玩家会把握交易窗口集中押注金棕榈热门博取最高回报，或分散押注多部影片降低风险。每个10分钟结算周期内价格锁定，您可以在观察市场动向后再决定是否出手。密切关注口碑走势，在预期上涨前买入、预期下跌前卖出，同时保留部分股份等待最终颁奖结果获取分红。祝你好运！
             </p>
           </div>
         </div>
