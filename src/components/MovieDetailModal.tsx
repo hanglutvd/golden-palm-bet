@@ -268,7 +268,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium text-muted-foreground">数量（股）</label>
                     <span className="text-xs text-muted-foreground">
-                      持有 {currentQty} 股 · 最多{mode === 'buy' ? '买入' : '卖出'} {maxBuy} 股
+                      持有 {currentQty} 股
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
