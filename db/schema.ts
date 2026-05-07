@@ -67,6 +67,9 @@ export const comments = sqliteTable("comments", {
   userId: integer("user_id").notNull(),
   username: text("username").notNull(),
   content: text("content").notNull(),
+  replyTo: integer("reply_to"), // references comments.id for reply
+  replyToUsername: text("reply_to_username"), // quoted username
+  replyToContent: text("reply_to_content"), // quoted content snippet
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 

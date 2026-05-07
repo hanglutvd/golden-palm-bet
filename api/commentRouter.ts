@@ -7,11 +7,14 @@ import { findUserById } from "./queries/users.js";
 const MAX_COMMENT_LENGTH = 300;
 
 export const commentRouter = createRouter({
-  // Create a new comment
+  // Create a new comment (optionally with reply)
   create: publicQuery
     .input(
       z.object({
         content: z.string().min(1, "请输入内容").max(MAX_COMMENT_LENGTH, `内容最多${MAX_COMMENT_LENGTH}字`),
+        replyTo: z.number().optional(),
+        replyToUsername: z.string().optional(),
+        replyToContent: z.string().optional(),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -28,6 +31,9 @@ export const commentRouter = createRouter({
         userId: ctx.user.id,
         username: user.username,
         content: input.content.trim(),
+        replyTo: input.replyTo,
+        replyToUsername: input.replyToUsername,
+        replyToContent: input.replyToContent,
       });
 
       return { success: true, id: commentId };

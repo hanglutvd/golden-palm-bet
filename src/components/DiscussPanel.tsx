@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, X, Send, Trash2 } from 'lucide-react';
+import { MessageSquare, X, Send, Trash2, Reply } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/providers/trpc';
@@ -7,6 +7,11 @@ import { trpc } from '@/providers/trpc';
 export function DiscussPanel() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [replyTarget, setReplyTarget] = useState<{
+    id: number;
+    username: string;
+    content: string;
+  } | null>(null);
   const { isAuthenticated, user } = useAuth();
 
   const utils = trpc.useUtils();
@@ -19,6 +24,7 @@ export function DiscussPanel() {
   const createMutation = trpc.comment.create.useMutation({
     onSuccess: () => {
       setInput('');
+      setReplyTarget(null);
       utils.comment.list.invalidate();
     },
     onError: (err) => {
@@ -34,7 +40,12 @@ export function DiscussPanel() {
 
   const handleSend = () => {
     if (!input.trim()) return;
-    createMutation.mutate({ content: input.trim() });
+    createMutation.mutate({
+      content: input.trim(),
+      replyTo: replyTarget?.id,
+      replyToUsername: replyTarget?.username,
+      replyToContent: replyTarget?.content.slice(0, 60),
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -42,6 +53,14 @@ export function DiscussPanel() {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleReply = (comment: { id: number; username: string; content: string }) => {
+    setReplyTarget({ id: comment.id, username: comment.username, content: comment.content });
+  };
+
+  const cancelReply = () => {
+    setReplyTarget(null);
   };
 
   const formatTime = (date: Date | string) => {
@@ -65,7 +84,6 @@ export function DiscussPanel() {
 
   return (
     <>
-      {/* Collapsed Button */}
       <button
         onClick={() => setOpen(true)}
         className="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-app-card border border-app-border hover:bg-app-hover transition-colors group"
@@ -79,7 +97,6 @@ export function DiscussPanel() {
         </div>
       </button>
 
-      {/* Modal */}
       <AnimatePresence>
         {open && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -92,7 +109,6 @@ export function DiscussPanel() {
               transition={{ duration: 0.2 }}
               className="relative w-full max-w-lg max-h-[85vh] overflow-hidden rounded-xl bg-app-card border border-app-border shadow-2xl flex flex-col"
             >
-              {/* Header */}
               <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-app-border bg-app-card/95 backdrop-blur-sm flex-shrink-0">
                 <div className="flex items-center gap-3">
                   <MessageSquare className="h-5 w-5 text-app-gold" />
@@ -106,7 +122,6 @@ export function DiscussPanel() {
                 </button>
               </div>
 
-              {/* Comments List */}
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                 {isLoading ? (
                   <div className="text-center py-8">
@@ -143,7 +158,28 @@ export function DiscussPanel() {
                             </button>
                           )}
                         </div>
+
+                        {/* Quoted reply */}
+                        {comment.replyTo && comment.replyToUsername && (
+                          <div className="mb-1.5 pl-2 border-l-2 border-app-gold/30 rounded">
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              回复 <span className="text-app-gold">{comment.replyToUsername}</span>：{comment.replyToContent}
+                            </p>
+                          </div>
+                        )}
+
                         <p className="text-sm text-muted-foreground leading-relaxed break-words">{comment.content}</p>
+
+                        {/* Reply button */}
+                        {isAuthenticated && (
+                          <button
+                            onClick={() => handleReply({ id: comment.id, username: comment.username, content: comment.content })}
+                            className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-app-gold transition-colors"
+                          >
+                            <Reply className="h-3 w-3" />
+                            回复
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))
@@ -152,6 +188,18 @@ export function DiscussPanel() {
 
               {/* Input Area */}
               <div className="sticky bottom-0 border-t border-app-border bg-app-card px-6 py-3 flex-shrink-0">
+                {/* Reply target indicator */}
+                {replyTarget && (
+                  <div className="flex items-center justify-between mb-2 px-2 py-1 rounded bg-app-gold/5 border border-app-gold/20">
+                    <span className="text-[11px] text-app-gold truncate">
+                      回复 {replyTarget.username}：{replyTarget.content.slice(0, 40)}
+                    </span>
+                    <button onClick={cancelReply} className="p-0.5 text-muted-foreground hover:text-foreground">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+
                 {isAuthenticated ? (
                   <div className="flex items-center gap-2">
                     <input
@@ -159,7 +207,7 @@ export function DiscussPanel() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="发表你的看法..."
+                      placeholder={replyTarget ? `回复 ${replyTarget.username}...` : '发表你的看法...'}
                       maxLength={300}
                       className="flex-1 bg-app-bg border border-app-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-app-gold/50"
                     />

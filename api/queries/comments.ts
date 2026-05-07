@@ -6,6 +6,9 @@ export async function createComment(data: {
   userId: number;
   username: string;
   content: string;
+  replyTo?: number;
+  replyToUsername?: string;
+  replyToContent?: string;
 }) {
   const result = await getDb()
     .insert(comments)
@@ -13,6 +16,9 @@ export async function createComment(data: {
       userId: data.userId,
       username: data.username,
       content: data.content,
+      replyTo: data.replyTo,
+      replyToUsername: data.replyToUsername,
+      replyToContent: data.replyToContent,
     })
     .returning({ id: comments.id });
 
