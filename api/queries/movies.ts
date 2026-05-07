@@ -15,35 +15,23 @@ export async function findMovieById(id: number) {
   });
 }
 
-export async function updateMoviePrice(id: number, newPrice: number) {
-  await getDb()
-    .update(movies)
-    .set({
-      currentPrice: String(newPrice.toFixed(2)),
-      totalVolume: String(Number((await findMovieById(id))?.totalVolume || 0) + 1),
-      updatedAt: new Date(),
-    })
-    .where(eq(movies.id, id));
-  return newPrice;
-}
-
 function getSettlementKey(today: string, session: string) {
   return `${today}-${session}`;
 }
 
 /**
- * Open the market for a single movie (called when first trade of session happens):
- * - Apply any accumulated dailyNetVolume from previous session
- * - Set basePrice = prevPrice (change% reflects latest settlement movement)
- * - Reset dailyNetVolume to 0
- * - Set lastOpenDate to current session key
+ * ensureMovieMarketOpen: called before first trade of a session
+ * - prevPrice = currentPrice (price at session start / last settlement)
+ * - Apply netVolume to get newPrice
+ * - basePrice = prevPrice (baseline for this session's change%)
+ * - currentPrice = newPrice
+ * - reset dailyNetVolume
  */
 export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   const today = getBeijingDateStr();
   const session = getBeijingHour() < 15 ? "am" : "pm";
   const settlementKey = getSettlementKey(today, session);
 
-  // Check if this session is already opened (lastOpenDate starts with "YYYY-MM-DD-am" or "YYYY-MM-DD-pm")
   if (movie.lastOpenDate?.startsWith(settlementKey)) return movie;
 
   const prevPrice = Number(movie.currentPrice);
@@ -51,12 +39,10 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   let newPrice = prevPrice;
 
   if (netVolume !== 0) {
-    // Apply net volume impact: +0.5% per net share
     newPrice = newPrice * (1 + netVolume * 0.005);
-    if (newPrice < 1) newPrice = 1; // floor at 1
+    if (newPrice < 1) newPrice = 1;
   }
 
-  // basePrice = prevPrice: change% reflects latest settlement movement
   await getDb()
     .update(movies)
     .set({
@@ -68,34 +54,28 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
     })
     .where(eq(movies.id, movie.id));
 
-  return {
-    ...movie,
-    currentPrice: String(newPrice.toFixed(2)),
-    basePrice: String(prevPrice.toFixed(2)),
-    dailyNetVolume: 0,
-    lastOpenDate: settlementKey,
-  };
+  return { ...movie, currentPrice: String(newPrice.toFixed(2)), basePrice: String(prevPrice.toFixed(2)), dailyNetVolume: 0, lastOpenDate: settlementKey };
 }
 
 /**
- * Periodic settlement every 10 minutes during trading hours:
- * - Apply current session's netVolume to adjust currentPrice
- * - basePrice = prevPrice (updated every settlement, change% tracks 10-min movement)
- * - Reset dailyNetVolume to 0 for next 10-minute window
- * - settlementKey includes hour:minute to allow multiple settlements per session
+ * openMarketForAll: called every 10 minutes during trading hours
+ * - prevPrice = currentPrice (price before this settlement)
+ * - Apply netVolume to get newPrice
+ * - basePrice = prevPrice (change% tracks 10-min movement)
+ * - currentPrice = newPrice
+ * - reset dailyNetVolume
  */
 export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
   const today = getBeijingDateStr();
   const nowHour = getBeijingHour();
   const nowMinute = new Date().getMinutes();
   const sessionKey = session || (nowHour < 15 ? "am" : "pm");
-  // Include hour:minute in settlement key to allow multiple settlements per session
   const settlementKey = `${today}-${sessionKey}-${nowHour}:${nowMinute}`;
 
   const all = await findAllMovies();
 
   for (const movie of all) {
-    if (!force && movie.lastOpenDate === settlementKey) continue; // already settled for this window
+    if (!force && movie.lastOpenDate === settlementKey) continue;
 
     const prevPrice = Number(movie.currentPrice);
     const netVolume = Number(movie.dailyNetVolume);
@@ -106,7 +86,6 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
       if (newPrice < 1) newPrice = 1;
     }
 
-    // basePrice = prevPrice: change% reflects the latest 10-minute settlement movement
     await getDb()
       .update(movies)
       .set({
@@ -120,28 +99,13 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
   }
 }
 
-/**
- * Increment daily net volume for a movie
- * positive = net buy, negative = net sell
- */
 export async function incrementDailyNetVolume(movieId: number, delta: number) {
   let movie = await findMovieById(movieId);
   if (!movie) return;
-
-  // Ensure market is open first (so we're writing to today's counter)
   await ensureMovieMarketOpen(movie);
-
-  // Re-fetch after potential market open (dailyNetVolume may have been reset)
   movie = await findMovieById(movieId);
   if (!movie) return;
-
-  await getDb()
-    .update(movies)
-    .set({
-      dailyNetVolume: Number(movie.dailyNetVolume) + delta,
-      updatedAt: new Date(),
-    })
-    .where(eq(movies.id, movieId));
+  await getDb().update(movies).set({ dailyNetVolume: Number(movie.dailyNetVolume) + delta, updatedAt: new Date() }).where(eq(movies.id, movieId));
 }
 
 export async function seedMovies() {
@@ -149,40 +113,34 @@ export async function seedMovies() {
   if (existing.length > 0) return;
 
   const movieData = [
-    { name: '盒子里的羊', director: '是枝裕和', premiereDate: '待定' },
-    { name: '平行故事', director: '阿斯加·法哈蒂', premiereDate: '待定' },
-    { name: '苦涩的圣诞节', director: '佩德罗·阿莫多瓦', premiereDate: '待定' },
-    { name: '峡湾', director: '克里斯蒂安·蒙吉', premiereDate: '待定' },
-    { name: '希望', director: '罗泓轸', premiereDate: '待定' },
-    { name: '突如其来', director: '滨口龙介', premiereDate: '待定' },
-    { name: '故土', director: '帕维乌·帕夫利科夫斯基', premiereDate: '待定' },
-    { name: '弥诺陶洛斯', director: '安德烈·兹维亚金采夫', premiereDate: '待定' },
-    { name: '所爱之人', director: '罗德里戈·索罗戈延', premiereDate: '待定' },
-    { name: '黑球', director: '哈维尔·安布罗希 / 哈维尔·卡尔沃', premiereDate: '待定' },
-    { name: '我爱的男人', director: '艾拉·萨克斯', premiereDate: '待定' },
-    { name: '纸老虎', director: '詹姆斯·格雷', premiereDate: '待定' },
-    { name: '温柔的怪物', director: '玛丽·克鲁泽', premiereDate: '待定' },
-    { name: '穆朗', director: '拉斯洛·奈迈施', premiereDate: '待定' },
-    { name: '凪日记', director: '深田晃司', premiereDate: '待定' },
-    { name: '夜之寓言', director: '蕾雅·梅西斯', premiereDate: '待定' },
-    { name: '懦夫', director: '卢卡斯·德霍特', premiereDate: '待定' },
-    { name: '向往的冒险', director: '瓦莱斯卡·格里策巴赫', premiereDate: '待定' },
-    { name: '嘉朗丝', director: '让娜·埃里', premiereDate: '待定' },
-    { name: '我们的救赎', director: '伊曼努尔·马雷', premiereDate: '待定' },
-    { name: '未知', director: '亚瑟·阿拉里', premiereDate: '待定' },
-    { name: '一个女人的生活', director: '夏琳·布儒瓦-塔凯', premiereDate: '待定' },
+    { name: '盒子里的羊', director: '是枝裕和' },
+    { name: '平行故事', director: '阿斯加·法哈蒂' },
+    { name: '苦涩的圣诞节', director: '佩德罗·阿莫多瓦' },
+    { name: '峡湾', director: '克里斯蒂安·蒙吉' },
+    { name: '希望', director: '罗泓轸' },
+    { name: '突如其来', director: '滨口龙介' },
+    { name: '故土', director: '帕维乌·帕夫利科夫斯基' },
+    { name: '弥诺陶洛斯', director: '安德烈·兹维亚金采夫' },
+    { name: '所爱之人', director: '罗德里戈·索罗戈延' },
+    { name: '黑球', director: '哈维尔·安布罗希 / 哈维尔·卡尔沃' },
+    { name: '我爱的男人', director: '艾拉·萨克斯' },
+    { name: '纸老虎', director: '詹姆斯·格雷' },
+    { name: '温柔的怪物', director: '玛丽·克鲁泽' },
+    { name: '穆朗', director: '拉斯洛·奈迈施' },
+    { name: '凪日记', director: '深田晃司' },
+    { name: '夜之寓言', director: '蕾雅·梅西斯' },
+    { name: '懦夫', director: '卢卡斯·德霍特' },
+    { name: '向往的冒险', director: '瓦莱斯卡·格里策巴赫' },
+    { name: '嘉朗丝', director: '让娜·埃里' },
+    { name: '我们的救赎', director: '伊曼努尔·马雷' },
+    { name: '未知', director: '亚瑟·阿拉里' },
+    { name: '一个女人的生活', director: '夏琳·布儒瓦-塔凯' },
   ];
 
   for (const m of movieData) {
     await getDb().insert(movies).values({
-      name: m.name,
-      director: m.director,
-      currentPrice: "100.00",
-      basePrice: "100.00",
-      totalVolume: "0",
-      dailyNetVolume: 0,
-      lastOpenDate: getSettlementKey(getBeijingDateStr(), "am"),
-      premiereDate: m.premiereDate,
+      name: m.name, director: m.director, currentPrice: "100.00", basePrice: "100.00",
+      totalVolume: "0", dailyNetVolume: 0, lastOpenDate: "", premiereDate: "待定",
     });
   }
 }
