@@ -34,7 +34,7 @@ export function MarketModal({ open, onClose }: MarketModalProps) {
           <div className="flex items-center gap-3">
             <BarChart3 className="h-5 w-5 text-app-gold" />
             <div>
-              <h2 className="text-lg font-bold text-app-gold">消息中心</h2>
+              <h2 className="text-lg font-bold text-app-gold">口碑中心</h2>
               <p className="text-xs text-muted-foreground">
                 {validImages.length > 0 ? `共 ${validImages.length} 张评分表` : '场刊评分表每日更新'}
               </p>

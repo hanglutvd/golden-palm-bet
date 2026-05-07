@@ -20,7 +20,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
         <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-app-border bg-app-card/95 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <BookOpen className="h-5 w-5 text-app-gold" />
-            <h2 className="text-lg font-bold text-app-gold">竞猜规则</h2>
+            <h2 className="text-lg font-bold text-app-gold">交易规则</h2>
           </div>
           <button
             onClick={onClose}

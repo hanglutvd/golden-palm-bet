@@ -17,7 +17,7 @@ export function AdminDashboard() {
     onSuccess: () => {
       utils.invalidate();
       setConfirming(false);
-      alert('内测数据已重置：\n- 所有用户余额恢复为 ¥3000\n- 所有电影价格恢复为 100\n- 所有持仓和交易记录已清空');
+      alert('内测数据已重置：\n- 所有用户余额恢复为 3,000\n- 所有电影价格恢复为 100\n- 所有持仓和交易记录已清空');
     },
   });
 

@@ -94,7 +94,7 @@ export function PrizesModal({ open, onClose }: PrizesModalProps) {
             <Trophy className="h-5 w-5 text-app-gold" />
             <div>
               <h2 className="text-lg font-bold text-app-gold">奖品池</h2>
-              <p className="text-xs text-muted-foreground">竞猜结束后，财富排行前列的玩家将获得以下奖品</p>
+              <p className="text-xs text-muted-foreground">电影节结束后，财富排行前列的玩家将获得以下奖品</p>
             </div>
           </div>
           <button
