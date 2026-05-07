@@ -137,30 +137,30 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
               </div>
             ) : (
               <div className="rounded-lg border border-app-border overflow-x-auto">
-                <div className="min-w-[420px]">
-                <div className="grid grid-cols-[80px_1fr_60px_90px_100px] gap-x-4 gap-y-0 px-4 py-2 bg-app-bg/60 border-b border-app-border">
-                  <span className="text-xs font-semibold text-muted-foreground">类型</span>
-                  <span className="text-xs font-semibold text-muted-foreground">电影</span>
-                  <span className="text-xs font-semibold text-muted-foreground text-right">股数</span>
-                  <span className="text-xs font-semibold text-muted-foreground text-right">价格</span>
-                  <span className="text-xs font-semibold text-muted-foreground text-right">金额</span>
-                </div>
-                <div className="divide-y divide-app-border/40 max-h-64 overflow-y-auto">
-                  {transactions?.map((tx) => (
-                    <div key={tx.id} className="grid grid-cols-[80px_1fr_60px_90px_100px] gap-x-4 gap-y-0 items-center px-4 py-2">
-                      <div className={`flex items-center justify-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium w-fit ${tx.type === "buy" ? "bg-app-green/10 text-app-green" : "bg-app-red/10 text-app-red"}`}>
-                        {tx.type === "buy" ? <ArrowUpRight className="h-3 w-3 flex-shrink-0" /> : <ArrowDownRight className="h-3 w-3 flex-shrink-0" />}
-                        <span className="whitespace-nowrap">{tx.type === "buy" ? "买入" : "卖出"}</span>
+                <div className="min-w-0">
+                  <div className="grid grid-cols-[48px_1fr_48px_72px_72px] sm:grid-cols-[80px_1fr_60px_90px_100px] gap-x-2 sm:gap-x-4 gap-y-0 px-3 sm:px-4 py-2 bg-app-bg/60 border-b border-app-border">
+                    <span className="text-xs font-semibold text-muted-foreground">类型</span>
+                    <span className="text-xs font-semibold text-muted-foreground">电影</span>
+                    <span className="text-xs font-semibold text-muted-foreground text-right">股数</span>
+                    <span className="text-xs font-semibold text-muted-foreground text-right">价格</span>
+                    <span className="text-xs font-semibold text-muted-foreground text-right">金额</span>
+                  </div>
+                  <div className="divide-y divide-app-border/40 max-h-64 overflow-y-auto">
+                    {transactions?.map((tx) => (
+                      <div key={tx.id} className="grid grid-cols-[48px_1fr_48px_72px_72px] sm:grid-cols-[80px_1fr_60px_90px_100px] gap-x-2 sm:gap-x-4 gap-y-0 items-center px-3 sm:px-4 py-2">
+                        <div className={`flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[10px] sm:text-xs font-medium w-fit ${tx.type === "buy" ? "bg-app-green/10 text-app-green" : "bg-app-red/10 text-app-red"}`}>
+                          {tx.type === "buy" ? <ArrowUpRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" /> : <ArrowDownRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />}
+                          <span className="whitespace-nowrap">{tx.type === "buy" ? "买" : "卖"}</span>
+                        </div>
+                        <span className="text-sm text-foreground truncate">{tx.movieName}</span>
+                        <span className="text-sm text-foreground tabular-nums text-right">{tx.quantity}</span>
+                        <span className="text-sm text-muted-foreground tabular-nums text-right"><GameCoin amount={tx.price.toFixed(2)} iconClassName="h-3 w-3" /></span>
+                        <span className={`text-sm font-medium tabular-nums text-right whitespace-nowrap ${tx.type === "buy" ? "text-app-red" : "text-app-green"}`}>
+                          {tx.type === "buy" ? "-" : "+"}<GameCoin amount={tx.totalAmount.toFixed(2)} iconClassName="h-3 w-3" />
+                        </span>
                       </div>
-                      <span className="text-sm text-foreground truncate">{tx.movieName}</span>
-                      <span className="text-sm text-foreground tabular-nums text-right">{tx.quantity}</span>
-                      <span className="text-sm text-muted-foreground tabular-nums text-right"><GameCoin amount={tx.price.toFixed(2)} iconClassName="h-3 w-3" /></span>
-                      <span className={`text-sm font-medium tabular-nums text-right whitespace-nowrap ${tx.type === "buy" ? "text-app-red" : "text-app-green"}`}>
-                        {tx.type === "buy" ? "-" : "+"}<GameCoin amount={tx.totalAmount.toFixed(2)} iconClassName="h-3 w-3" />
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

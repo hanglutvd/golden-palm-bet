@@ -3,6 +3,7 @@ import { createRouter, adminQuery } from "./middleware.js";
 import { getDb } from "./queries/connection.js";
 import { movies, users, diaries, holdings, transactions } from "../db/schema.js";
 import { eq, desc } from "drizzle-orm";
+import { openMarketForAll } from "./queries/movies.js";
 import { getBeijingDateStr } from "../contracts/market.js";
 
 export const adminRouter = createRouter({
@@ -54,7 +55,7 @@ export const adminRouter = createRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      const [{ id }] = await getDb()
+      const result = await getDb()
         .insert(movies)
         .values({
           name: input.name,
@@ -66,8 +67,8 @@ export const adminRouter = createRouter({
           lastOpenDate: "",
           premiereDate: input.premiereDate || null,
         })
-        .$returningId();
-      return { id, ...input };
+        .returning({ id: movies.id });
+      return { id: result[0].id, ...input };
     }),
 
   deleteMovie: adminQuery
@@ -167,7 +168,7 @@ export const adminRouter = createRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      const [{ id }] = await getDb()
+      const result = await getDb()
         .insert(diaries)
         .values({
           title: input.title,
@@ -177,8 +178,8 @@ export const adminRouter = createRouter({
           coverImage3: input.coverImage3 || null,
           externalUrl: input.externalUrl || null,
         })
-        .$returningId();
-      return { id };
+        .returning({ id: diaries.id });
+      return { id: result[0].id };
     }),
 
   deleteDiary: adminQuery
@@ -221,4 +222,21 @@ export const adminRouter = createRouter({
 
     return { success: true, resetCount: allMovies.length };
   }),
+
+  // Force settlement immediately (admin only) - for testing / fixing basePrice
+  forceSettlement: adminQuery
+    .input(z.object({ session: z.enum(["am", "pm"]).optional() }))
+    .mutation(async ({ input }) => {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const beijing = new Date(utc + 8 * 3600000);
+      const session = input.session || (beijing.getHours() < 15 ? "am" : "pm");
+
+      await openMarketForAll(session);
+
+      return {
+        success: true,
+        message: `已强制结算（session=${session}），basePrice 已更新为结算前价格`,
+      };
+    }),
 });
