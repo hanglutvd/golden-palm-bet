@@ -161,7 +161,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
           <div className="flex items-center justify-between rounded-lg bg-app-bg/60 border border-app-border/60 px-4 py-3">
             <div>
               <p className="text-xs text-muted-foreground">当前价格</p>
-              <p className={`text-xl font-bold tabular-nums ${isUp ? 'text-app-green' : isDown ? 'text-app-red' : 'text-foreground'}`}>
+              <p className={`text-xl font-bold tabular-nums ${isUp ? 'text-app-red' : isDown ? 'text-app-green' : 'text-foreground'}`}>
                 {price.toFixed(2)}
               </p>
             </div>
@@ -174,9 +174,9 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
             <div className="text-right">
               <p className="text-xs text-muted-foreground">较开盘价</p>
               <div className="flex items-center justify-end gap-1">
-                {isUp && <TrendingUp className="h-4 w-4 text-app-green" />}
-                {isDown && <TrendingDown className="h-4 w-4 text-app-red" />}
-                <span className={`text-sm font-semibold tabular-nums ${isUp ? 'text-app-green' : isDown ? 'text-app-red' : 'text-muted-foreground'}`}>
+                {isUp && <TrendingUp className="h-4 w-4 text-app-red" />}
+                {isDown && <TrendingDown className="h-4 w-4 text-app-green" />}
+                <span className={`text-sm font-semibold tabular-nums ${isUp ? 'text-app-red' : isDown ? 'text-app-green' : 'text-muted-foreground'}`}>
                   {isUp ? '+' : ''}{movie.changePercent.toFixed(2)}%
                 </span>
               </div>

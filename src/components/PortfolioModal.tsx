@@ -66,11 +66,11 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
 
           {/* P/L summary */}
           {portfolio && portfolio.totalPnl !== 0 && (
-            <div className={`flex items-center gap-2 rounded-lg px-4 py-2.5 border ${portfolio.totalPnl >= 0 ? "bg-app-green/5 border-app-green/20" : "bg-app-red/5 border-app-red/20"}`}>
-              {portfolio.totalPnl >= 0 ? <TrendingUp className="h-4 w-4 text-app-green" /> : <TrendingDown className="h-4 w-4 text-app-red" />}
+            <div className={`flex items-center gap-2 rounded-lg px-4 py-2.5 border ${portfolio.totalPnl >= 0 ? "bg-app-red/5 border-app-red/20" : "bg-app-green/5 border-app-green/20"}`}>
+              {portfolio.totalPnl >= 0 ? <TrendingUp className="h-4 w-4 text-app-red" /> : <TrendingDown className="h-4 w-4 text-app-green" />}
               <span className="text-sm">
                 持仓盈亏：
-                <span className={`font-bold ${portfolio.totalPnl >= 0 ? "text-app-green" : "text-app-red"}`}>
+                <span className={`font-bold ${portfolio.totalPnl >= 0 ? "text-app-red" : "text-app-green"}`}>
                   {portfolio.totalPnl >= 0 ? "+" : ""}<GameCoin amount={portfolio.totalPnl.toFixed(2)} />
                 </span>
               </span>
@@ -112,7 +112,7 @@ export function PortfolioModal({ open, onClose }: PortfolioModalProps) {
                       <span className="text-sm text-foreground tabular-nums text-right">{h.quantity}</span>
                       <span className="text-sm text-muted-foreground tabular-nums text-right"><GameCoin amount={h.avgBuyPrice.toFixed(2)} iconClassName="h-3 w-3" /></span>
                       <span className="text-sm text-foreground tabular-nums text-right"><GameCoin amount={h.currentPrice.toFixed(2)} iconClassName="h-3 w-3" /></span>
-                      <div className={`text-right min-w-0 ${h.pnl >= 0 ? "text-app-green" : "text-app-red"}`}>
+                      <div className={`text-right min-w-0 ${h.pnl >= 0 ? "text-app-red" : "text-app-green"}`}>
                         <span className="text-sm font-medium tabular-nums inline-flex items-center gap-0.5">{h.pnl >= 0 ? "+" : ""}<GameCoin amount={h.pnl.toFixed(2)} iconClassName="h-3 w-3" /></span>
                         <span className="text-xs tabular-nums ml-0.5">({h.pnl >= 0 ? "+" : ""}{h.pnlPercent.toFixed(1)}%)</span>
                       </div>

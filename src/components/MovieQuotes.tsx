@@ -139,9 +139,9 @@ export function MovieQuotes() {
                       <span
                         className={`text-sm font-semibold tabular-nums transition-colors duration-300 ${
                           movie.trend === 'up'
-                            ? 'text-app-green'
+                            ? 'text-app-red'
                             : movie.trend === 'down'
-                              ? 'text-app-red'
+                              ? 'text-app-green'
                               : 'text-foreground'
                         }`}
                       >
@@ -151,10 +151,10 @@ export function MovieQuotes() {
                     <td className="px-3 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         {movie.trend === 'up' && (
-                          <TrendingUp className="h-3.5 w-3.5 text-app-green" />
+                          <TrendingUp className="h-3.5 w-3.5 text-app-red" />
                         )}
                         {movie.trend === 'down' && (
-                          <TrendingDown className="h-3.5 w-3.5 text-app-red" />
+                          <TrendingDown className="h-3.5 w-3.5 text-app-green" />
                         )}
                         {movie.trend === 'flat' && (
                           <Minus className="h-3.5 w-3.5 text-muted-foreground" />
@@ -162,9 +162,9 @@ export function MovieQuotes() {
                         <span
                           className={`text-sm font-medium tabular-nums ${
                             movie.trend === 'up'
-                              ? 'text-app-green'
+                              ? 'text-app-red'
                               : movie.trend === 'down'
-                                ? 'text-app-red'
+                                ? 'text-app-green'
                                 : 'text-muted-foreground'
                           }`}
                         >

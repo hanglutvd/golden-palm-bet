@@ -74,10 +74,10 @@ export function UserPortfolioPreview({ onOpenFull }: UserPortfolioPreviewProps) 
 
       {/* P/L summary */}
       {totalPnl !== 0 && (
-        <div className={`mx-3 mb-2 flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 ${totalPnl >= 0 ? 'bg-app-green/5' : 'bg-app-red/5'}`}>
-          {totalPnl >= 0 ? <TrendingUp className="h-3 w-3 text-app-green" /> : <TrendingDown className="h-3 w-3 text-app-red" />}
+        <div className={`mx-3 mb-2 flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 ${totalPnl >= 0 ? 'bg-app-red/5' : 'bg-app-green/5'}`}>
+          {totalPnl >= 0 ? <TrendingUp className="h-3 w-3 text-app-red" /> : <TrendingDown className="h-3 w-3 text-app-green" />}
           <span className="text-xs">
-            盈亏 <span className={`font-bold ${totalPnl >= 0 ? 'text-app-green' : 'text-app-red'}`}>{totalPnl >= 0 ? '+' : ''}<GameCoin amount={totalPnl.toFixed(2)} iconClassName="h-3 w-3" /></span>
+            盈亏 <span className={`font-bold ${totalPnl >= 0 ? 'text-app-red' : 'text-app-green'}`}>{totalPnl >= 0 ? '+' : ''}<GameCoin amount={totalPnl.toFixed(2)} iconClassName="h-3 w-3" /></span>
           </span>
         </div>
       )}
@@ -107,7 +107,7 @@ export function UserPortfolioPreview({ onOpenFull }: UserPortfolioPreviewProps) 
                     <p className="text-xs font-medium text-foreground truncate">{h.movieName}</p>
                     <p className="text-[10px] text-muted-foreground">{h.quantity} 股 @ {h.avgBuyPrice.toFixed(0)}</p>
                   </div>
-                  <div className={`text-right ${h.pnl >= 0 ? 'text-app-green' : 'text-app-red'}`}>
+                  <div className={`text-right ${h.pnl >= 0 ? 'text-app-red' : 'text-app-green'}`}>
                     <p className="text-xs font-medium tabular-nums">{h.pnl >= 0 ? '+' : ''}{h.pnl.toFixed(0)}</p>
                     <p className="text-[10px] tabular-nums">{h.pnl >= 0 ? '+' : ''}{h.pnlPercent.toFixed(1)}%</p>
                   </div>
