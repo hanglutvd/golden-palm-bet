@@ -45,8 +45,9 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   // Exact match: if lastOpenDate equals expected session key, already settled
   if (movie.lastOpenDate === settlementKey) return movie;
 
+  const prevPrice = Number(movie.currentPrice);
   const netVolume = Number(movie.dailyNetVolume);
-  let newPrice = Number(movie.currentPrice);
+  let newPrice = prevPrice;
 
   if (netVolume !== 0) {
     // Apply net volume impact: +0.2% per net share
@@ -54,10 +55,12 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
     if (newPrice < 1) newPrice = 1; // floor at 1
   }
 
+  // Save prevPrice as basePrice for change% calculation
   await getDb()
     .update(movies)
     .set({
       currentPrice: String(newPrice.toFixed(2)),
+      basePrice: String(prevPrice.toFixed(2)),
       dailyNetVolume: 0,
       lastOpenDate: settlementKey,
       updatedAt: new Date(),
@@ -67,6 +70,7 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   return {
     ...movie,
     currentPrice: String(newPrice.toFixed(2)),
+    basePrice: String(prevPrice.toFixed(2)),
     dailyNetVolume: 0,
     lastOpenDate: settlementKey,
   };
@@ -88,8 +92,9 @@ export async function openMarketForAll(session?: "am" | "pm") {
   for (const movie of all) {
     if (movie.lastOpenDate === settlementKey) continue; // already settled for this session
 
+    const prevPrice = Number(movie.currentPrice);
     const netVolume = Number(movie.dailyNetVolume);
-    let newPrice = Number(movie.currentPrice);
+    let newPrice = prevPrice;
 
     if (netVolume !== 0) {
       newPrice = newPrice * (1 + netVolume * 0.002);
@@ -100,6 +105,7 @@ export async function openMarketForAll(session?: "am" | "pm") {
       .update(movies)
       .set({
         currentPrice: String(newPrice.toFixed(2)),
+        basePrice: String(prevPrice.toFixed(2)),
         dailyNetVolume: 0,
         lastOpenDate: settlementKey,
         updatedAt: new Date(),
