@@ -102,9 +102,17 @@ export function initDatabase() {
       user_id INTEGER NOT NULL,
       username TEXT NOT NULL,
       content TEXT NOT NULL,
+      reply_to INTEGER,
+      reply_to_username TEXT,
+      reply_to_content TEXT,
       created_at INTEGER NOT NULL DEFAULT (unixepoch())
     )
   `);
+
+  // Migrate: add reply columns to existing comments table
+  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to INTEGER`); } catch {}
+  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to_username TEXT`); } catch {}
+  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to_content TEXT`); } catch {}
 
   // Site config table
   db.run(`

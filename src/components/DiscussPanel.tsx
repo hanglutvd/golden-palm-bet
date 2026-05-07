@@ -12,14 +12,20 @@ export function DiscussPanel() {
     username: string;
     content: string;
   } | null>(null);
+  const [offset, setOffset] = useState(0);
   const { isAuthenticated, user } = useAuth();
 
   const utils = trpc.useUtils();
 
+  const PAGE_SIZE = 20;
+  const limit = offset === 0 ? 10 : PAGE_SIZE;
+
   const { data, isLoading } = trpc.comment.list.useQuery(
-    { limit: 50, offset: 0 },
+    { limit, offset },
     { enabled: open }
   );
+
+  const hasMore = data ? data.total > offset + limit : false;
 
   const createMutation = trpc.comment.create.useMutation({
     onSuccess: () => {
@@ -183,6 +189,18 @@ export function DiscussPanel() {
                       </div>
                     </div>
                   ))
+                )}
+
+                {/* Load more */}
+                {hasMore && (
+                  <div className="text-center pt-2">
+                    <button
+                      onClick={() => setOffset(offset + limit)}
+                      className="text-xs text-muted-foreground hover:text-app-gold transition-colors"
+                    >
+                      加载更多 ({data?.total} 条)
+                    </button>
+                  </div>
                 )}
               </div>
 

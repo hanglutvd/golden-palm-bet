@@ -42,17 +42,13 @@ export const commentRouter = createRouter({
   // List comments (paginated)
   list: publicQuery
     .input(
-      z
-        .object({
-          limit: z.number().min(1).max(100).optional(),
-          offset: z.number().min(0).optional(),
-        })
-        .optional(),
+      z.object({
+        limit: z.number().min(1).max(100),
+        offset: z.number().min(0),
+      }),
     )
     .query(async ({ input }) => {
-      const limit = input?.limit ?? 50;
-      const offset = input?.offset ?? 0;
-      const items = await listComments(limit, offset);
+      const items = await listComments(input.limit, input.offset);
       const total = await countComments();
       return { items, total };
     }),
