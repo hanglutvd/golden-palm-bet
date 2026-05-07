@@ -10,6 +10,31 @@ import { env } from "./lib/env.js";
 
 const JWT_SECRET = env.appSecret;
 const SALT_ROUNDS = 10;
+const MAX_USERNAME_WIDTH = 12; // CJK=2 width, ASCII=1 width
+
+/** Calculate display width: CJK chars = 2, ASCII/symbols = 1 */
+function getDisplayWidth(str: string): number {
+  let width = 0;
+  for (const ch of str) {
+    const code = ch.charCodeAt(0);
+    // CJK Unified Ideographs
+    if ((code >= 0x4e00 && code <= 0x9fff) ||
+        (code >= 0x3400 && code <= 0x4dbf) ||
+        (code >= 0xf900 && code <= 0xfaff)) {
+      width += 2;
+    } else {
+      width += 1;
+    }
+  }
+  return width;
+}
+
+function validateUsername(username: string): string | null {
+  if (username.length === 0) return "请输入用户名";
+  const width = getDisplayWidth(username);
+  if (width > MAX_USERNAME_WIDTH) return `用户名过长（最多6个中文或12个英文）`;
+  return null;
+}
 
 // Simple in-memory rate limiting for auth endpoints
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -58,11 +83,15 @@ export const authRouter = createRouter({
     .input(
       z.object({
         email: z.string().min(1, "请输入邮箱"),
-        username: z.string().min(2, "用户名至少2个字符").max(50, "用户名最多50个字符"),
+        username: z.string().min(1, "请输入用户名"),
         password: z.string().min(6, "密码至少6个字符"),
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      // Validate username display width
+      const usernameError = validateUsername(input.username);
+      if (usernameError) throw new Error(usernameError);
+
       // Rate limit by IP
       const ip = getClientIP(ctx.req);
       if (!checkRateLimit(`register:${ip}`)) {
@@ -224,11 +253,15 @@ export const authRouter = createRouter({
   updateProfile: publicQuery
     .input(
       z.object({
-        username: z.string().min(2).max(50),
+        username: z.string().min(1, "请输入用户名"),
       }),
     )
     .mutation(async ({ input, ctx }) => {
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
+
+      // Validate username display width
+      const usernameError = validateUsername(input.username);
+      if (usernameError) throw new Error(usernameError);
 
       // Check if username is taken
       const existing = await findUserByUsername(input.username);

@@ -57,7 +57,7 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
         return;
       }
       if (username.length < 2 || username.length > 50) {
-        setError("用户名长度应为2-50个字符");
+        setError("用户名过长（最多6个中文或12个英文）");
         return;
       }
       console.log("[AuthModal] Calling register with:", { email: email.trim(), username: username.trim() });
@@ -179,7 +179,7 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  用户名只能包含字母、数字、下划线和中文，不能包含空格
+                  最多6个中文或12个英文，混排自动计算
                 </p>
               </div>
             </>

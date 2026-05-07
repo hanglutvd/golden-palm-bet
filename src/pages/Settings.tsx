@@ -161,7 +161,7 @@ export function Settings({ onBack }: SettingsProps) {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="输入新昵称（2-50个字符）"
+                placeholder="输入新昵称（最多6中文或12英文）"
                 className="w-full rounded-md border border-app-border bg-app-bg px-3 py-2.5 text-sm text-foreground focus:border-app-gold focus:outline-none transition-colors"
               />
             </div>
