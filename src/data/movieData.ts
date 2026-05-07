@@ -6,7 +6,7 @@ export const movieQuotes: MovieQuote[] = [
   { id: '3', rank: 3, name: '苦涩的圣诞节', director: '佩德罗·阿莫多瓦', price: 100.00, change: 0.00, changePercent: 0.00, trend: 'flat', premiereDate: '待定' },
   { id: '4', rank: 4, name: '峡湾', director: '克里斯蒂安·蒙吉', price: 100.00, change: 0.00, changePercent: 0.00, trend: 'flat', premiereDate: '待定' },
   { id: '5', rank: 5, name: '希望', director: '罗泓轸', price: 100.00, change: 0.00, changePercent: 0.00, trend: 'flat', premiereDate: '待定' },
-  { id: '6', rank: 6, name: '突如其来的', director: '滨口龙介', price: 100.00, change: 0.00, changePercent: 0.00, trend: 'flat', premiereDate: '待定' },
+  { id: '6', rank: 6, name: '突如其来', director: '滨口龙介', price: 100.00, change: 0.00, changePercent: 0.00, trend: 'flat', premiereDate: '待定' },
   { id: '7', rank: 7, name: '故土', director: '帕维乌·帕夫利科夫斯基', price: 100.00, change: 0.00, changePercent: 0.00, trend: 'flat', premiereDate: '待定' },
   { id: '8', rank: 8, name: '弥诺陶洛斯', director: '安德烈·兹维亚金采夫', price: 100.00, change: 0.00, changePercent: 0.00, trend: 'flat', premiereDate: '待定' },
   { id: '9', rank: 9, name: '所爱之人', director: '罗德里戈·索罗戈延', price: 100.00, change: 0.00, changePercent: 0.00, trend: 'flat', premiereDate: '待定' },
