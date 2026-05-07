@@ -2,6 +2,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery } from "./middleware.js";
 import { findUserByEmailOrUsername, findUserById, findUserByEmail, findUserByResetToken, findUserByUsername, createUser, setResetToken, clearResetToken, updatePassword, updateUsername, countUsers } from "./queries/users.js";
 import { sendPasswordResetEmail } from "./lib/email.js";
@@ -9,6 +10,32 @@ import { env } from "./lib/env.js";
 
 const JWT_SECRET = env.appSecret;
 const SALT_ROUNDS = 10;
+
+// Simple in-memory rate limiting for auth endpoints
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX = 10; // max requests per window
+
+function checkRateLimit(key: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(key);
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+  if (record.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  record.count++;
+  return true;
+}
+
+function getClientIP(req: Request): string {
+  // Railway forwards client IP via X-Forwarded-For
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return "unknown";
+}
 
 function setAuthCookie(resHeaders: Headers, userId: number) {
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: "30d" });
@@ -36,12 +63,16 @@ export const authRouter = createRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      // Rate limit by IP
+      const ip = getClientIP(ctx.req);
+      if (!checkRateLimit(`register:${ip}`)) {
+        throw new Error("请求过于频繁，请稍后再试");
+      }
+
       const existing = await findUserByEmailOrUsername(input.email, input.username);
       if (existing) {
-        if (existing.email === input.email) {
-          throw new Error("该邮箱已被注册");
-        }
-        throw new Error("该用户名已被占用");
+        // Security: do not reveal whether email or username is taken
+        throw new Error("该邮箱或用户名已被注册");
       }
 
       const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS);
@@ -81,14 +112,21 @@ export const authRouter = createRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
+      // Rate limit by IP
+      const ip = getClientIP(ctx.req);
+      if (!checkRateLimit(`login:${ip}`)) {
+        throw new Error("请求过于频繁，请稍后再试");
+      }
+
       const user = await findUserByEmailOrUsername(input.identifier, input.identifier);
       if (!user) {
-        throw new Error("用户不存在");
+        // Security: generic error to prevent user enumeration
+        throw new Error("邮箱/用户名或密码错误");
       }
 
       const valid = await bcrypt.compare(input.password, user.passwordHash);
       if (!valid) {
-        throw new Error("密码错误");
+        throw new Error("邮箱/用户名或密码错误");
       }
 
       setAuthCookie(ctx.resHeaders, user.id);
@@ -128,7 +166,8 @@ export const authRouter = createRouter({
     .mutation(async ({ input }) => {
       const user = await findUserByEmail(input.email);
       if (!user) {
-        throw new Error("该邮箱未注册");
+        // Security: do not reveal whether email exists
+        throw new Error("如果该邮箱已注册，重置邮件将发送");
       }
 
       const token = crypto.randomBytes(32).toString("hex");
@@ -136,15 +175,20 @@ export const authRouter = createRouter({
 
       await setResetToken(user.id, token, expiry);
 
-      // Try to send real email, fallback to returning token for testing
+      // Try to send real email
       const emailResult = await sendPasswordResetEmail(input.email, token);
       if (emailResult.success) {
         return { message: "重置邮件已发送，请查收邮箱" };
       }
 
-      // Fallback: return token for manual reset (when email not configured)
+      // Security: never return token in production
+      if (env.isProduction) {
+        return { message: "邮件发送失败，请联系管理员" };
+      }
+
+      // Fallback only for development/testing
       return {
-        message: "邮件服务未配置，已生成重置令牌",
+        message: "邮件服务未配置，已生成重置令牌（仅开发环境）",
         token,
       };
     }),

@@ -21,7 +21,7 @@ async function checkSessionTradeLimit(userId: number, movieId: number) {
   const today = getBeijingDateStr();
 
   // Check if user already traded this movie in current session
-  const existing = getDb()
+  const existing = await getDb()
     .select()
     .from(transactions)
     .where(
@@ -30,13 +30,12 @@ async function checkSessionTradeLimit(userId: number, movieId: number) {
         eq(transactions.movieId, movieId),
         eq(transactions.session, session)
       )
-    )
-    .all();
+    );
 
   // Filter to today's transactions by checking created_at
   const todayStart = new Date(`${today}T00:00:00+08:00`).getTime();
   const todayEnd = new Date(`${today}T23:59:59+08:00`).getTime();
-  const todayTrades = existing.filter((t) => {
+  const todayTrades = existing.filter((t: typeof transactions.$inferSelect) => {
     const ts = new Date(t.createdAt).getTime();
     return ts >= todayStart && ts <= todayEnd;
   });
@@ -71,8 +70,10 @@ export const tradingRouter = createRouter({
       const price = Number(movie.currentPrice);
       const totalCost = price * input.quantity;
 
-      if (Number(user.balance) < totalCost) {
-        throw new Error(`余额不足，需要 ¥${totalCost.toFixed(2)}，当前余额 ¥${Number(user.balance).toFixed(2)}`);
+      // Security: do not expose current balance in error messages
+      const userBalance = Number(user.balance);
+      if (userBalance < totalCost) {
+        throw new Error(`余额不足，需要 ${totalCost.toFixed(2)}`);
       }
 
       // Check holding limit
@@ -82,10 +83,13 @@ export const tradingRouter = createRouter({
         throw new Error(`持股上限为 ${MAX_HOLDING_PER_MOVIE} 股，当前持有 ${currentQty} 股，最多可再买 ${MAX_HOLDING_PER_MOVIE - currentQty} 股`);
       }
 
-      // Deduct balance
-      await getDb()
+      // Use atomic update to prevent race conditions
+      const db = getDb();
+      const newBalance = (userBalance - totalCost).toFixed(2);
+
+      await db
         .update(users)
-        .set({ balance: String((Number(user.balance) - totalCost).toFixed(2)) })
+        .set({ balance: newBalance })
         .where(eq(users.id, user.id));
 
       // Record holding
@@ -110,7 +114,7 @@ export const tradingRouter = createRouter({
         message: `买入 ${input.quantity} 股「${movie.name}」成功`,
         price,
         totalCost,
-        newBalance: Number(user.balance) - totalCost,
+        newBalance: Number(newBalance),
       };
     }),
 
@@ -140,10 +144,13 @@ export const tradingRouter = createRouter({
       const price = Number(movie.currentPrice);
       const totalRevenue = price * input.quantity;
 
-      // Add balance
-      await getDb()
+      // Use atomic update
+      const db = getDb();
+      const newBalance = (Number(user.balance) + totalRevenue).toFixed(2);
+
+      await db
         .update(users)
-        .set({ balance: String((Number(user.balance) + totalRevenue).toFixed(2)) })
+        .set({ balance: newBalance })
         .where(eq(users.id, user.id));
 
       // Reduce holding
@@ -168,7 +175,7 @@ export const tradingRouter = createRouter({
         message: `卖出 ${input.quantity} 股「${movie.name}」成功`,
         price,
         totalRevenue,
-        newBalance: Number(user.balance) + totalRevenue,
+        newBalance: Number(newBalance),
       };
     }),
 

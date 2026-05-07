@@ -26,7 +26,7 @@ export async function createContext(
     const tokenMatch = cookie.match(/auth-token=([^;]+)/);
     if (tokenMatch) {
       try {
-        const decoded = jwt.verify(tokenMatch[1], JWT_SECRET) as { userId: number };
+        const decoded = jwt.verify(tokenMatch[1], JWT_SECRET) as unknown as { userId: number };
         const user = await findUserById(decoded.userId);
         if (user) {
           ctx.user = user;

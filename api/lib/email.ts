@@ -31,12 +31,12 @@ export async function sendPasswordResetEmail(
     await client.emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "【金棕榈竞猜】密码重置",
+      subject: "【戛纳主竞赛股市】密码重置",
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #e8e8e8; background: #1a1816;">
           <h2 style="color: #c9a84c; margin-bottom: 16px;">密码重置</h2>
           <p>您好，</p>
-          <p>您 requested a password reset for your account at 金棕榈竞猜.</p>
+          <p>您 requested a password reset for your account at 戛纳主竞赛股市.</p>
           <p>点击下方链接重置密码（24小时内有效）：</p>
           <a href="${resetUrl}" style="display: inline-block; background: #c9a84c; color: #141210; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 16px 0;">
             重置密码

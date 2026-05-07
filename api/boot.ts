@@ -3,6 +3,7 @@ import { bodyLimit } from "hono/body-limit";
 import type { HttpBindings } from "@hono/node-server";
 import { serve } from "@hono/node-server";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import jwt from "jsonwebtoken";
 import fs from "fs";
 import { appRouter } from "./router.js";
 import { createContext } from "./context.js";
@@ -29,7 +30,26 @@ if (!fs.existsSync(IMG_DIR)) {
   fs.mkdirSync(IMG_DIR, { recursive: true });
 }
 
+// Simple auth middleware for upload endpoint
+async function requireAuth(c: any) {
+  const cookie = c.req.raw.headers.get("cookie") || "";
+  const tokenMatch = cookie.match(/auth-token=([^;]+)/);
+  if (!tokenMatch) return null;
+  try {
+    const decoded = jwt.verify(tokenMatch[1], env.appSecret!) as { userId: number };
+    return decoded.userId;
+  } catch {
+    return null;
+  }
+}
+
 app.post("/api/upload", bodyLimit({ maxSize: 10 * 1024 * 1024 }), async (c) => {
+  // Require authentication for uploads
+  const userId = await requireAuth(c);
+  if (!userId) {
+    return c.json({ error: "请先登录" }, 401);
+  }
+
   try {
     const body = await c.req.parseBody();
     const file = body.file as File;
