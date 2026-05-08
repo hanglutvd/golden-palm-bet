@@ -26,7 +26,6 @@ export function MovieQuotes() {
         change: apiM.change,
         changePercent: apiM.changePercent,
         trend: apiM.trend,
-        dailyNetVolume: apiM.dailyNetVolume,
         premiereDate: apiM.premiereDate || staticM.premiereDate,
       };
     }
@@ -171,9 +170,6 @@ export function MovieQuotes() {
                         >
                           {movie.trend === 'up' ? '+' : ''}
                           {movie.changePercent.toFixed(2)}%
-                        </span>
-                        <span className="text-[10px] text-muted-foreground ml-1">
-                          (量:{(movie as any).dailyNetVolume ?? 0})
                         </span>
                       </div>
                     </td>
