@@ -36,25 +36,35 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
 
   const prevPrice = Number(movie.currentPrice);
   const netVolume = Number(movie.dailyNetVolume);
-  let newPrice = prevPrice;
 
   if (netVolume !== 0) {
-    newPrice = newPrice * (1 + netVolume * 0.005);
+    let newPrice = prevPrice * (1 + netVolume * 0.005);
     if (newPrice < 1) newPrice = 1;
+
+    await getDb()
+      .update(movies)
+      .set({
+        currentPrice: String(newPrice.toFixed(2)),
+        basePrice: String(prevPrice.toFixed(2)),
+        dailyNetVolume: 0,
+        lastOpenDate: settlementKey,
+        updatedAt: new Date(),
+      })
+      .where(eq(movies.id, movie.id));
+
+    return { ...movie, currentPrice: String(newPrice.toFixed(2)), basePrice: String(prevPrice.toFixed(2)), dailyNetVolume: 0, lastOpenDate: settlementKey };
+  } else {
+    // No trades: only update lastOpenDate
+    await getDb()
+      .update(movies)
+      .set({
+        lastOpenDate: settlementKey,
+        updatedAt: new Date(),
+      })
+      .where(eq(movies.id, movie.id));
+
+    return { ...movie, lastOpenDate: settlementKey };
   }
-
-  await getDb()
-    .update(movies)
-    .set({
-      currentPrice: String(newPrice.toFixed(2)),
-      basePrice: String(prevPrice.toFixed(2)),
-      dailyNetVolume: 0,
-      lastOpenDate: settlementKey,
-      updatedAt: new Date(),
-    })
-    .where(eq(movies.id, movie.id));
-
-  return { ...movie, currentPrice: String(newPrice.toFixed(2)), basePrice: String(prevPrice.toFixed(2)), dailyNetVolume: 0, lastOpenDate: settlementKey };
 }
 
 /**
@@ -79,23 +89,33 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
 
     const prevPrice = Number(movie.currentPrice);
     const netVolume = Number(movie.dailyNetVolume);
-    let newPrice = prevPrice;
 
     if (netVolume !== 0) {
-      newPrice = newPrice * (1 + netVolume * 0.005);
+      // Has trades: update price and basePrice
+      let newPrice = prevPrice * (1 + netVolume * 0.005);
       if (newPrice < 1) newPrice = 1;
-    }
 
-    await getDb()
-      .update(movies)
-      .set({
-        currentPrice: String(newPrice.toFixed(2)),
-        basePrice: String(prevPrice.toFixed(2)),
-        dailyNetVolume: 0,
-        lastOpenDate: settlementKey,
-        updatedAt: new Date(),
-      })
-      .where(eq(movies.id, movie.id));
+      await getDb()
+        .update(movies)
+        .set({
+          currentPrice: String(newPrice.toFixed(2)),
+          basePrice: String(prevPrice.toFixed(2)),
+          dailyNetVolume: 0,
+          lastOpenDate: settlementKey,
+          updatedAt: new Date(),
+        })
+        .where(eq(movies.id, movie.id));
+    } else {
+      // No trades: keep price and basePrice unchanged
+      // Only update lastOpenDate to prevent repeated settlement
+      await getDb()
+        .update(movies)
+        .set({
+          lastOpenDate: settlementKey,
+          updatedAt: new Date(),
+        })
+        .where(eq(movies.id, movie.id));
+    }
   }
 }
 
