@@ -18,6 +18,7 @@ export const movieRouter = createRouter({
       change: Number((Number(m.currentPrice) - Number(m.basePrice)).toFixed(2)),
       changePercent: Number((((Number(m.currentPrice) - Number(m.basePrice)) / Number(m.basePrice)) * 100).toFixed(2)),
       trend: Number(m.currentPrice) > Number(m.basePrice) + 0.01 ? "up" as const : Number(m.currentPrice) < Number(m.basePrice) - 0.01 ? "down" as const : "flat" as const,
+      dailyNetVolume: m.dailyNetVolume,
       premiereDate: m.premiereDate || undefined,
     }));
   }),
