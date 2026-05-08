@@ -132,14 +132,13 @@ export function AdminDashboard() {
             </div>
             <div className="max-h-48 overflow-y-auto">
               {settleMutation.data.diagnostics.map((d: any, i: number) => (
-                <div key={i} className="grid grid-cols-[1fr,auto,auto,auto,auto] gap-2 px-3 py-1 text-[10px] border-b border-app-border/30 last:border-0">
+                <div key={i} className="grid grid-cols-[1fr,auto,auto,auto] gap-2 px-3 py-1 text-[10px] border-b border-app-border/30 last:border-0">
                   <span className="text-foreground truncate">{d.name}</span>
                   <span className="tabular-nums text-muted-foreground">价:{d.currentPrice}</span>
                   <span className="tabular-nums text-app-gold">基:{d.basePrice}</span>
                   <span className={`tabular-nums ${d.changePercent >= 0 ? 'text-app-red' : 'text-app-green'}`}>
                     {d.changePercent >= 0 ? '+' : ''}{d.changePercent}%
                   </span>
-                  <span className="tabular-nums text-muted-foreground">量:{d.dailyNetVolume}</span>
                 </div>
               ))}
             </div>
