@@ -106,7 +106,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
   const total = (price * quantity).toFixed(2);
   const trendColor = isUp ? '#4ade80' : isDown ? '#f87171' : '#a0a0a0';
   const isPending = buyMutation.isPending || sellMutation.isPending;
-  const marketClosed = !marketStatus.isOpen;
+  const marketClosed = false; // TEMP: allow trading at all times for testing
 
   const myHolding = myHoldings?.find((h) => h.movieId === movieId);
   const currentQty = myHolding?.quantity || 0;
