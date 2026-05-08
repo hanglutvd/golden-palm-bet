@@ -7,8 +7,6 @@ import { findTransactionsByMovie } from "./queries/transactions.js";
 export const movieRouter = createRouter({
   list: publicQuery.query(async () => {
     await seedMovies();
-    // Batch open market before returning
-    await openMarketForAll();
     const all = await findAllMovies();
     return all.map((m, i) => ({
       id: m.id,
