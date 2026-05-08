@@ -162,12 +162,37 @@ export function Settings({ onBack }: SettingsProps) {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="输入新昵称（最多6中文或12英文）"
-                className="w-full rounded-md border border-app-border bg-app-bg px-3 py-2.5 text-sm text-foreground focus:border-app-gold focus:outline-none transition-colors"
+                disabled={(() => {
+                  if (!user?.usernameChangedAt) return false;
+                  const lastChange = new Date(user.usernameChangedAt).getTime();
+                  const daysSince = (Date.now() - lastChange) / (1000 * 60 * 60 * 24);
+                  return daysSince < 30;
+                })()}
+                className="w-full rounded-md border border-app-border bg-app-bg px-3 py-2.5 text-sm text-foreground focus:border-app-gold focus:outline-none transition-colors disabled:opacity-50"
               />
+              {(() => {
+                if (!user?.usernameChangedAt) return null;
+                const lastChange = new Date(user.usernameChangedAt).getTime();
+                const daysSince = (Date.now() - lastChange) / (1000 * 60 * 60 * 24);
+                const daysRemaining = Math.ceil(30 - daysSince);
+                if (daysSince < 30) {
+                  return (
+                    <p className="text-xs text-muted-foreground">
+                      昵称每30天可修改一次，还需等待 <span className="text-app-gold font-medium">{daysRemaining}</span> 天
+                    </p>
+                  );
+                }
+                return null;
+              })()}
             </div>
             <button
               onClick={handleUpdateProfile}
-              disabled={updateProfileMutation.isPending}
+              disabled={updateProfileMutation.isPending || (() => {
+                if (!user?.usernameChangedAt) return false;
+                const lastChange = new Date(user.usernameChangedAt).getTime();
+                const daysSince = (Date.now() - lastChange) / (1000 * 60 * 60 * 24);
+                return daysSince < 30;
+              })()}
               className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-app-gold text-white text-sm font-medium hover:bg-app-gold/80 transition-colors disabled:opacity-50"
             >
               <Save className="h-4 w-4" />

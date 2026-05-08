@@ -114,6 +114,9 @@ export function initDatabase() {
   try { db.run(`ALTER TABLE comments ADD COLUMN reply_to_username TEXT`); } catch {}
   try { db.run(`ALTER TABLE comments ADD COLUMN reply_to_content TEXT`); } catch {}
 
+  // Migrate: add username_changed_at to users table
+  try { db.run(`ALTER TABLE users ADD COLUMN username_changed_at INTEGER`); } catch {}
+
   // Site config table
   db.run(`
     CREATE TABLE IF NOT EXISTS site_config (

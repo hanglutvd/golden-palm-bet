@@ -182,6 +182,7 @@ export const authRouter = createRouter({
       username: user.username,
       balance: Number(user.balance),
       role: user.role,
+      usernameChangedAt: user.usernameChangedAt,
     };
   }),
 
@@ -250,6 +251,7 @@ export const authRouter = createRouter({
     }),
 
   // Update profile (username)
+  // Update profile (username) with 30-day cooldown
   updateProfile: publicQuery
     .input(
       z.object({
@@ -263,6 +265,21 @@ export const authRouter = createRouter({
       const usernameError = validateUsername(input.username);
       if (usernameError) throw new Error(usernameError);
 
+      // Check 30-day cooldown
+      const user = await findUserById(ctx.user.id);
+      if (!user) throw new Error("用户不存在");
+
+      if (user.usernameChangedAt) {
+        const lastChange = new Date(user.usernameChangedAt).getTime();
+        const now = Date.now();
+        const daysSince = (now - lastChange) / (1000 * 60 * 60 * 24);
+        const daysRemaining = Math.ceil(30 - daysSince);
+
+        if (daysSince < 30) {
+          throw new Error(`昵称每30天可修改一次，还需等待 ${daysRemaining} 天`);
+        }
+      }
+
       // Check if username is taken
       const existing = await findUserByUsername(input.username);
       if (existing && existing.id !== ctx.user.id) {
@@ -270,7 +287,7 @@ export const authRouter = createRouter({
       }
 
       await updateUsername(ctx.user.id, input.username);
-      return { message: "昵称修改成功" };
+      return { message: "昵称修改成功", nextChangeInDays: 30 };
     }),
 
   // Change password

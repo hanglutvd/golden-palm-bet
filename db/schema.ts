@@ -9,6 +9,7 @@ export const users = sqliteTable("users", {
   balance: text("balance").notNull().default("3000.00"),
   resetToken: text("reset_token"),
   resetTokenExpiry: integer("reset_token_expiry", { mode: "timestamp" }),
+  usernameChangedAt: integer("username_changed_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });

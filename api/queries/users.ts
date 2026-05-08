@@ -86,6 +86,6 @@ export async function updatePassword(userId: number, passwordHash: string) {
 export async function updateUsername(userId: number, username: string) {
   await getDb()
     .update(users)
-    .set({ username, updatedAt: new Date() })
+    .set({ username, usernameChangedAt: new Date(), updatedAt: new Date() })
     .where(eq(users.id, userId));
 }
