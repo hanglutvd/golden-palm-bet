@@ -21,6 +21,15 @@ export function AdminDashboard() {
     },
   });
 
+  const fixMutation = trpc.admin.fixBasePrice.useMutation({
+    onSuccess: (data) => {
+      alert(data.message);
+    },
+    onError: (err) => {
+      alert(err.message || '修复失败');
+    },
+  });
+
   const settleMutation = trpc.admin.forceSettlement.useMutation({
     onSuccess: (data) => {
       utils.invalidate();
@@ -100,6 +109,15 @@ export function AdminDashboard() {
           >
             <Play className="h-3.5 w-3.5" />
             {settleMutation.isPending ? '结算中...' : '执行结算'}
+          </button>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <button
+            onClick={() => fixMutation.mutate()}
+            disabled={fixMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-app-red/30 text-xs text-app-red hover:bg-app-red/10 transition-colors disabled:opacity-50"
+          >
+            {fixMutation.isPending ? '修复中...' : '修复涨跌幅'}
           </button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
