@@ -3,7 +3,7 @@ import { createRouter, adminQuery } from "./middleware.js";
 import { getDb } from "./queries/connection.js";
 import { movies, users, diaries, holdings, transactions } from "../db/schema.js";
 import { eq, desc } from "drizzle-orm";
-import { openMarketForAll } from "./queries/movies.js";
+import { openMarketForAll, findAllMovies } from "./queries/movies.js";
 import { getBeijingDateStr } from "../contracts/market.js";
 
 export const adminRouter = createRouter({
@@ -232,11 +232,21 @@ export const adminRouter = createRouter({
       const beijing = new Date(utc + 8 * 3600000);
       const session = input.session || (beijing.getHours() < 15 ? "am" : "pm");
 
-      await openMarketForAll(session);
+      const before = await findAllMovies();
+      await openMarketForAll(session, true); // force=true: always settle even if already settled
+      const after = await findAllMovies();
 
       return {
         success: true,
-        message: `已强制结算（session=${session}），basePrice 已更新为结算前价格`,
+        message: `已强制结算（session=${session}）`,
+        diagnostics: after.map((m, i) => ({
+          name: m.name,
+          currentPrice: Number(m.currentPrice),
+          basePrice: Number(m.basePrice),
+          changePercent: Number((((Number(m.currentPrice) - Number(m.basePrice)) / Number(m.basePrice)) * 100).toFixed(2)),
+          dailyNetVolume: m.dailyNetVolume,
+          lastOpenDate: m.lastOpenDate,
+        })),
       };
     }),
 });

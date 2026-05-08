@@ -105,6 +105,28 @@ export function AdminDashboard() {
         <p className="text-xs text-muted-foreground mt-2">
           交易时段（09:00-12:00 / 15:00-18:00）内每 10 分钟自动结算一次。价格实时跳动，涨跌幅跟随变动。收盘后冻结。点击可手动触发一次结算。
         </p>
+
+        {/* Settlement diagnostics */}
+        {settleMutation.data?.diagnostics && (
+          <div className="mt-3 rounded-md border border-app-border overflow-hidden">
+            <div className="px-3 py-1.5 bg-app-bg/60 border-b border-app-border">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase">结算诊断</p>
+            </div>
+            <div className="max-h-48 overflow-y-auto">
+              {settleMutation.data.diagnostics.map((d: any, i: number) => (
+                <div key={i} className="grid grid-cols-[1fr,auto,auto,auto,auto] gap-2 px-3 py-1 text-[10px] border-b border-app-border/30 last:border-0">
+                  <span className="text-foreground truncate">{d.name}</span>
+                  <span className="tabular-nums text-muted-foreground">价:{d.currentPrice}</span>
+                  <span className="tabular-nums text-app-gold">基:{d.basePrice}</span>
+                  <span className={`tabular-nums ${d.changePercent >= 0 ? 'text-app-red' : 'text-app-green'}`}>
+                    {d.changePercent >= 0 ? '+' : ''}{d.changePercent}%
+                  </span>
+                  <span className="tabular-nums text-muted-foreground">量:{d.dailyNetVolume}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Reset button */}
