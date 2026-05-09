@@ -18,8 +18,9 @@ async function checkSessionTradeLimit(
   tradeType: "buy" | "sell"
 ) {
   const session = getCurrentSession();
-  // TEMP: for load testing, use "am" as default session when market is closed
-  const effectiveSession = session || "am";
+  if (!session) {
+    throw new Error("当前为非交易时段");
+  }
 
   const today = getBeijingDateStr();
 
@@ -31,7 +32,7 @@ async function checkSessionTradeLimit(
       and(
         eq(transactions.userId, userId),
         eq(transactions.movieId, movieId),
-        eq(transactions.session, effectiveSession),
+        eq(transactions.session, session),
         eq(transactions.type, tradeType)
       )
     );
@@ -45,14 +46,14 @@ async function checkSessionTradeLimit(
   });
 
   if (todayTrades.length > 0) {
-    const sessionLabel = effectiveSession === "am" ? "上午" : "下午";
+    const sessionLabel = session === "am" ? "上午" : "下午";
     const typeLabel = tradeType === "buy" ? "买入" : "卖出";
     throw new Error(
-      `本${sessionLabel}时段已${typeLabel}过该电影，不可重复${typeLabel}（${effectiveSession === "am" ? "15:00" : "明日09:00"}后可再次操作）`
+      `本${sessionLabel}时段已${typeLabel}过该电影，不可重复${typeLabel}（${session === "am" ? "15:00" : "明日09:00"}后可再次操作）`
     );
   }
 
-  return effectiveSession;
+  return session;
 }
 
 export const tradingRouter = createRouter({
@@ -62,8 +63,7 @@ export const tradingRouter = createRouter({
       quantity: z.number().positive(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // TEMP: trading hours check disabled for load testing
-      // assertTradingHours();
+      assertTradingHours();
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
       const user = await findUserById(ctx.user.id);
@@ -132,8 +132,7 @@ export const tradingRouter = createRouter({
       quantity: z.number().positive(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // TEMP: trading hours check disabled for load testing
-      // assertTradingHours();
+      assertTradingHours();
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
       const user = await findUserById(ctx.user.id);
