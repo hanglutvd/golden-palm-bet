@@ -63,7 +63,8 @@ export const tradingRouter = createRouter({
       quantity: z.number().positive(),
     }))
     .mutation(async ({ input, ctx }) => {
-      assertTradingHours();
+      // TEMP: trading hours check disabled for load testing
+      // assertTradingHours();
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
       const user = await findUserById(ctx.user.id);
@@ -132,7 +133,8 @@ export const tradingRouter = createRouter({
       quantity: z.number().positive(),
     }))
     .mutation(async ({ input, ctx }) => {
-      assertTradingHours();
+      // TEMP: trading hours check disabled for load testing
+      // assertTradingHours();
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
       const user = await findUserById(ctx.user.id);
