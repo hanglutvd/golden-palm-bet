@@ -270,4 +270,5 @@ export const tradingRouter = createRouter({
       totalAssets: Number(user.balance) + totalMarketValue,
       holdings: holdingsWithDetails,
     };
- 
+  }),
+});
