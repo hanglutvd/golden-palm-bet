@@ -29,7 +29,7 @@
   let movies = [];
   try {
     const res = await fetch("/api/trpc/movie.list", {
-      headers: { "cookie": `auth-token=${token}` }
+      credentials: "include",
     });
     const data = await res.json();
     movies = data.result.data.json;
@@ -44,7 +44,7 @@
   let balance = 0;
   try {
     const res = await fetch("/api/trpc/trading.portfolio", {
-      headers: { "cookie": `auth-token=${token}` }
+      credentials: "include",
     });
     const data = await res.json();
     balance = data.result.data.json.balance;
@@ -81,9 +81,9 @@
     try {
       const res = await fetch("/api/trpc/trading.buy", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          "cookie": `auth-token=${token}`
         },
         body: JSON.stringify({
           "0": {
@@ -174,7 +174,7 @@
   console.log("📡 刷新电影列表，获取最新价格...");
   try {
     const res = await fetch("/api/trpc/movie.list", {
-      headers: { "cookie": `auth-token=${token}` }
+      credentials: "include",
     });
     const data = await res.json();
     const updatedMovies = data.result.data.json;
