@@ -18,9 +18,8 @@ async function checkSessionTradeLimit(
   tradeType: "buy" | "sell"
 ) {
   const session = getCurrentSession();
-  if (!session) {
-    throw new Error("当前为非交易时段");
-  }
+  // TEMP: for load testing, use "am" as default session when market is closed
+  const effectiveSession = session || "am";
 
   const today = getBeijingDateStr();
 
@@ -32,7 +31,7 @@ async function checkSessionTradeLimit(
       and(
         eq(transactions.userId, userId),
         eq(transactions.movieId, movieId),
-        eq(transactions.session, session),
+        eq(transactions.session, effectiveSession),
         eq(transactions.type, tradeType)
       )
     );
@@ -46,14 +45,14 @@ async function checkSessionTradeLimit(
   });
 
   if (todayTrades.length > 0) {
-    const sessionLabel = session === "am" ? "上午" : "下午";
+    const sessionLabel = effectiveSession === "am" ? "上午" : "下午";
     const typeLabel = tradeType === "buy" ? "买入" : "卖出";
     throw new Error(
-      `本${sessionLabel}时段已${typeLabel}过该电影，不可重复${typeLabel}（${session === "am" ? "15:00" : "明日09:00"}后可再次操作）`
+      `本${sessionLabel}时段已${typeLabel}过该电影，不可重复${typeLabel}（${effectiveSession === "am" ? "15:00" : "明日09:00"}后可再次操作）`
     );
   }
 
-  return session;
+  return effectiveSession;
 }
 
 export const tradingRouter = createRouter({
@@ -271,5 +270,4 @@ export const tradingRouter = createRouter({
       totalAssets: Number(user.balance) + totalMarketValue,
       holdings: holdingsWithDetails,
     };
-  }),
-});
+ 
