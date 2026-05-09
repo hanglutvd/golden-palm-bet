@@ -148,9 +148,14 @@ export function formatTimeRemaining(target: Date): string {
 
 /**
  * Validate if trading is allowed, throw error if not
- * TEMP: Trading hours check disabled for testing
  */
 export function assertTradingHours(): void {
-  // Allow trading at all times for testing
-  return;
+  const status = getMarketStatus();
+  if (!status.isOpen) {
+    const next = status.nextOpen!;
+    const timeStr = `${next.getHours().toString().padStart(2, "0")}:${next.getMinutes().toString().padStart(2, "0")}`;
+    throw new Error(
+      `当前为非交易时间（交易时段：09:00-12:00 / 15:00-18:00 北京时间）。下次开盘时间：${next.getMonth() + 1}月${next.getDate()}日 ${timeStr}`
+    );
+  }
 }

@@ -63,8 +63,7 @@ export const tradingRouter = createRouter({
       quantity: z.number().positive(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // TEMP: trading hours check disabled for testing
-      // assertTradingHours();
+      assertTradingHours();
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
       const user = await findUserById(ctx.user.id);
@@ -73,9 +72,8 @@ export const tradingRouter = createRouter({
       const movie = await findMovieById(input.movieId);
       if (!movie) throw new Error("电影不存在");
 
-      // TEMP: session trade limit disabled for testing
-      // const session = await checkSessionTradeLimit(user.id, input.movieId, "buy");
-      const session = getCurrentSession() || "am";
+      // Check session trade limit (buy: can buy once per movie per session)
+      const session = await checkSessionTradeLimit(user.id, input.movieId, "buy");
 
       const price = Number(movie.currentPrice);
       const totalCost = price * input.quantity;
@@ -134,8 +132,7 @@ export const tradingRouter = createRouter({
       quantity: z.number().positive(),
     }))
     .mutation(async ({ input, ctx }) => {
-      // TEMP: trading hours check disabled for testing
-      // assertTradingHours();
+      assertTradingHours();
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
       const user = await findUserById(ctx.user.id);
@@ -144,9 +141,8 @@ export const tradingRouter = createRouter({
       const movie = await findMovieById(input.movieId);
       if (!movie) throw new Error("电影不存在");
 
-      // TEMP: session trade limit disabled for testing
-      // const session = await checkSessionTradeLimit(user.id, input.movieId, "sell");
-      const session = getCurrentSession() || "am";
+      // Check session trade limit (sell: can sell once per movie per session)
+      const session = await checkSessionTradeLimit(user.id, input.movieId, "sell");
 
       const holding = await findHolding(user.id, input.movieId);
       if (!holding || Number(holding.quantity) < input.quantity) {

@@ -1,20 +1,33 @@
 import { getBeijingTime, getBeijingDateStr } from "../contracts/market.js";
 import { openMarketForAll } from "./queries/movies.js";
 
-const SETTLEMENT_INTERVAL_MS = 60 * 1000; // 1 minute for testing (was 10 min)
+const SETTLEMENT_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
- * Settlement cron: every 1 minute (all times, for testing)
- * TEMP: No trading hours restriction - runs 24/7 for testing
+ * Settlement cron: every 10 minutes during trading hours
+ * - Trading hours: 09:00-12:00, 15:00-18:00 Beijing Time
+ * - Sensitivity: 0.5% per net share
+ * - dailyNetVolume reset to 0 after each settlement
  */
 export function startDailySettlementCron() {
   const scheduleNext = () => {
-    console.log(`[cron] Next settlement in 1m`);
+    const now = new Date();
+    const msUntil = getMsUntilNextSettlement();
+
+    if (msUntil === null) {
+      // Outside trading hours, check again in 1 minute
+      console.log("[cron] Outside trading hours, rechecking in 1m...");
+      setTimeout(scheduleNext, 60 * 1000);
+      return;
+    }
+
+    const minutesUntil = Math.round(msUntil / 60000);
+    console.log(`[cron] Next settlement in ${minutesUntil}m`);
 
     setTimeout(() => {
       runSettlement();
       scheduleNext();
-    }, SETTLEMENT_INTERVAL_MS);
+    }, msUntil);
   };
 
   scheduleNext();
@@ -37,4 +50,59 @@ async function runSettlement() {
   } catch (err: any) {
     console.error(`[cron] Settlement failed:`, err.message);
   }
+}
+
+/**
+ * Calculate milliseconds until the next 10-minute boundary within trading hours.
+ * Trading hours: 09:00-12:00 and 15:00-18:00 Beijing Time
+ * Returns null if currently outside trading hours.
+ */
+function getMsUntilNextSettlement(): number | null {
+  const now = new Date();
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const beijing = new Date(utc + 8 * 3600000);
+  const hour = beijing.getHours();
+  const minute = beijing.getMinutes();
+
+  // Convert current Beijing time to minutes since midnight
+  const currentMinutes = hour * 60 + minute;
+
+  // Morning session: 09:00-12:00 (540-720)
+  // Afternoon session: 15:00-18:00 (900-1080)
+  const isTrading =
+    (currentMinutes >= 540 && currentMinutes < 720) ||
+    (currentMinutes >= 900 && currentMinutes < 1080);
+
+  if (!isTrading) {
+    return null;
+  }
+
+  // Find next 10-minute boundary: :00, :10, :20, :30, :40, :50
+  const nextBoundaryMinute = Math.ceil((minute + 1) / 10) * 10;
+  let targetHour = hour;
+  let targetMinute = nextBoundaryMinute;
+
+  if (targetMinute >= 60) {
+    targetHour += 1;
+    targetMinute = 0;
+  }
+
+  // Check if the next boundary is still within trading hours
+  const targetMinutes = targetHour * 60 + targetMinute;
+  const morningEnd = 720;   // 12:00
+  const afternoonEnd = 1080; // 18:00
+
+  if (currentMinutes < morningEnd && targetMinutes > morningEnd) {
+    return null;
+  }
+  if (currentMinutes < afternoonEnd && targetMinutes > afternoonEnd) {
+    return null;
+  }
+
+  // Calculate milliseconds until next boundary
+  const targetBeijing = new Date(beijing);
+  targetBeijing.setHours(targetHour, targetMinute, 0, 0);
+
+  const targetUtc = new Date(targetBeijing.getTime() - 8 * 3600000);
+  return targetUtc.getTime() - now.getTime();
 }
