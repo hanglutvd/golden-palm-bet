@@ -126,9 +126,26 @@ export function initDatabase() {
     )
   `);
 
+  // Create indexes for performance and concurrency
+  // Holdings: fast lookup by user+movie (critical for trading)
+  db.run(`CREATE INDEX IF NOT EXISTS idx_holdings_user_movie ON holdings(user_id, movie_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_holdings_user ON holdings(user_id)`);
+
+  // Transactions: fast lookup for session trade limits (critical for trading)
+  db.run(`CREATE INDEX IF NOT EXISTS idx_transactions_user_movie_session_type ON transactions(user_id, movie_id, session, type)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_transactions_movie ON transactions(movie_id)`);
+
+  // Comments: fast pagination
+  db.run(`CREATE INDEX IF NOT EXISTS idx_comments_created ON comments(created_at DESC)`);
+
+  // Users: fast lookup for auth
+  db.run(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
+
   // Seed movies if empty
   seedMovies();
 
   initialized = true;
-  console.log("[init-db] Database initialized");
+  console.log("[init-db] Database initialized with indexes");
 }

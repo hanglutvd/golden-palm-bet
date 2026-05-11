@@ -20,10 +20,14 @@ export async function upsertHolding(userId: number, movieId: number, quantity: n
       await getDb().delete(holdings).where(eq(holdings.id, existing.id));
       return null;
     }
-    const newAvg = ((existing.quantity * Number(existing.avgBuyPrice)) + (quantity * avgPrice)) / totalQty;
+    // Use integer math (cents) to avoid floating-point drift across many trades
+    const existingCents = Math.round(Number(existing.avgBuyPrice) * 100);
+    const newCents = Math.round(avgPrice * 100);
+    const avgCents = Math.round((existing.quantity * existingCents + quantity * newCents) / totalQty);
+    const newAvg = (avgCents / 100).toFixed(2);
     await getDb()
       .update(holdings)
-      .set({ quantity: totalQty, avgBuyPrice: String(newAvg.toFixed(2)), updatedAt: new Date() })
+      .set({ quantity: totalQty, avgBuyPrice: newAvg, updatedAt: new Date() })
       .where(eq(holdings.id, existing.id));
     return findHolding(userId, movieId);
   } else {

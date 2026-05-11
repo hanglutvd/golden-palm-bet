@@ -2,21 +2,21 @@ import { z } from "zod";
 import { createRouter, adminQuery } from "./middleware.js";
 import { getDb } from "./queries/connection.js";
 import { movies, users, diaries, holdings, transactions } from "../db/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { openMarketForAll, findAllMovies } from "./queries/movies.js";
 import { getBeijingDateStr } from "../contracts/market.js";
 
 export const adminRouter = createRouter({
-  // Dashboard stats
+  // Dashboard stats (use COUNT(*) instead of loading all rows)
   stats: adminQuery.query(async () => {
     const db = getDb();
-    const totalUsers = await db.select().from(users);
-    const totalMovies = await db.select().from(movies);
-    const totalDiaries = await db.select().from(diaries);
+    const [{ userCount }] = await db.select({ userCount: sql<number>`count(*)` }).from(users);
+    const [{ movieCount }] = await db.select({ movieCount: sql<number>`count(*)` }).from(movies);
+    const [{ diaryCount }] = await db.select({ diaryCount: sql<number>`count(*)` }).from(diaries);
     return {
-      userCount: totalUsers.length,
-      movieCount: totalMovies.length,
-      diaryCount: totalDiaries.length,
+      userCount,
+      movieCount,
+      diaryCount,
     };
   }),
 

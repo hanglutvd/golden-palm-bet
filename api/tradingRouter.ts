@@ -8,9 +8,13 @@ import { createTransaction, findTransactionsByUser } from "./queries/transaction
 import { findUserById } from "./queries/users.js";
 import { getDb } from "./queries/connection.js";
 import { users, transactions } from "../db/schema.js";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 const MAX_HOLDING_PER_MOVIE = 20;
+
+// Pre-launch trades use this special session marker so they don't
+// interfere with the formal trading session limits after 5/13.
+const PRELAUNCH_SESSION = "prelaunch";
 
 async function checkSessionTradeLimit(
   userId: number,
@@ -20,8 +24,10 @@ async function checkSessionTradeLimit(
   const session = getCurrentSession();
 
   // Pre-launch: no trade limit (unlimited buys/sells)
+  // Use a special session marker so pre-launch trades don't block
+  // formal session trades after the market officially opens.
   if (isPreLaunch()) {
-    return session || "am";
+    return PRELAUNCH_SESSION;
   }
 
   if (!session) {
@@ -97,14 +103,17 @@ export const tradingRouter = createRouter({
         throw new Error(`持股上限为 ${MAX_HOLDING_PER_MOVIE} 股，当前持有 ${currentQty} 股，最多可再买 ${MAX_HOLDING_PER_MOVIE - currentQty} 股`);
       }
 
-      // Use atomic update to prevent race conditions
+      // Atomic balance update: prevents race conditions under concurrent buys
       const db = getDb();
-      const newBalance = (userBalance - totalCost).toFixed(2);
-
-      await db
+      const deducted = db
         .update(users)
-        .set({ balance: newBalance })
-        .where(eq(users.id, user.id));
+        .set({ balance: sql`cast(cast(balance as real) - ${totalCost} as text)` })
+        .where(and(eq(users.id, user.id), sql`cast(balance as real) >= ${totalCost}`))
+        .run();
+
+      if (deducted.changes === 0) {
+        throw new Error("余额不足或交易冲突，请重试");
+      }
 
       // Record holding
       await upsertHolding(user.id, input.movieId, input.quantity, price);
@@ -123,12 +132,16 @@ export const tradingRouter = createRouter({
       // Accumulate daily net volume
       await incrementDailyNetVolume(input.movieId, input.quantity);
 
+      // Fetch updated balance for response
+      const updatedUser = await findUserById(user.id);
+      const newBalance = updatedUser ? Number(updatedUser.balance) : userBalance - totalCost;
+
       return {
         success: true,
         message: `买入 ${input.quantity} 股「${movie.name}」成功`,
         price,
         totalCost,
-        newBalance: Number(newBalance),
+        newBalance,
       };
     }),
 
@@ -158,14 +171,13 @@ export const tradingRouter = createRouter({
       const price = Number(movie.currentPrice);
       const totalRevenue = price * input.quantity;
 
-      // Use atomic update
+      // Atomic balance update: prevents race conditions under concurrent sells
       const db = getDb();
-      const newBalance = (Number(user.balance) + totalRevenue).toFixed(2);
-
-      await db
+      db
         .update(users)
-        .set({ balance: newBalance })
-        .where(eq(users.id, user.id));
+        .set({ balance: sql`cast(cast(balance as real) + ${totalRevenue} as text)` })
+        .where(eq(users.id, user.id))
+        .run();
 
       // Reduce holding
       await upsertHolding(user.id, input.movieId, -input.quantity, price);
@@ -184,12 +196,16 @@ export const tradingRouter = createRouter({
       // Accumulate daily net volume
       await incrementDailyNetVolume(input.movieId, -input.quantity);
 
+      // Fetch updated balance for response
+      const updatedUser = await findUserById(user.id);
+      const newBalance = updatedUser ? Number(updatedUser.balance) : Number(user.balance) + totalRevenue;
+
       return {
         success: true,
         message: `卖出 ${input.quantity} 股「${movie.name}」成功`,
         price,
         totalRevenue,
-        newBalance: Number(newBalance),
+        newBalance,
       };
     }),
 
