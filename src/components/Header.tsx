@@ -115,13 +115,21 @@ export function Header({ onOpenRules, onOpenAuth, onOpenLeaderboard, onOpenMarke
           )}
         </nav>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden p-1 text-muted-foreground hover:text-foreground"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        {/* Mobile: Rules button + Menu Button */}
+        <div className="md:hidden flex items-center gap-2">
+          <button
+            onClick={onOpenRules}
+            className="rounded-md bg-app-gold/10 border border-app-gold/30 px-2.5 py-1 text-xs font-medium text-app-gold hover:bg-app-gold/20 transition-colors"
+          >
+            规则
+          </button>
+          <button
+            className="p-1 text-muted-foreground hover:text-foreground"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Nav */}
