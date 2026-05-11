@@ -75,7 +75,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
           <div className="rounded-lg border border-app-red/30 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 bg-app-red/10 border-b border-app-red/20">
               <Flame className="h-4 w-4 text-app-red" />
-              <h3 className="text-sm font-semibold text-app-red">预热期（5月12日 ~ 5月13日 00:00）</h3>
+              <h3 className="text-sm font-semibold text-app-red">预热期（5月11日 ~ 5月13日 00:00）</h3>
             </div>
             <div className="divide-y divide-app-border/60">
               <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
