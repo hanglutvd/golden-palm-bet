@@ -1,4 +1,4 @@
-import { X, BookOpen, TrendingUp, DollarSign, Trophy, Wallet, Equal, Coins, Clock, CalendarCheck } from 'lucide-react';
+import { X, BookOpen, TrendingUp, DollarSign, Trophy, Wallet, Equal, Coins, Clock, CalendarCheck, Flame, Lock, Rocket } from 'lucide-react';
 import { GameCoin } from './GameCoin';
 
 interface RulesModalProps {
@@ -71,11 +71,101 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
             </div>
           </div>
 
+          {/* Rule 0: Pre-Launch Period */}
+          <div className="rounded-lg border border-app-red/30 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-app-red/10 border-b border-app-red/20">
+              <Flame className="h-4 w-4 text-app-red" />
+              <h3 className="text-sm font-semibold text-app-red">预热期（5月12日 ~ 5月13日 00:00）</h3>
+            </div>
+            <div className="divide-y divide-app-border/60">
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <Flame className="h-4 w-4 text-app-red" />
+                <span className="text-sm text-foreground">交易次数限制</span>
+                <span className="text-sm font-bold tabular-nums text-app-red">不限次数</span>
+              </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <Equal className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">电影价格</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">锁定 100 不变</span>
+              </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-foreground">涨跌幅显示</span>
+                <span className="text-sm font-bold tabular-nums text-muted-foreground">不展现</span>
+              </div>
+              <div className="px-4 py-2.5">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  预热期可自由交易，不限次数，价格始终锁定为100。您的交易会被记录（净成交量持续累积），但不会结算或展现涨跌幅。所有预热期的交易将在5月13日09:00首次开盘时一次性结算。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Lock Period */}
+          <div className="rounded-lg border border-app-border overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-app-bg/60 border-b border-app-border">
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold text-foreground">休市锁定（5月13日 00:00 ~ 09:00）</h3>
+            </div>
+            <div className="divide-y divide-app-border/60">
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-foreground">交易状态</span>
+                <span className="text-sm font-bold tabular-nums text-muted-foreground">暂停交易</span>
+              </div>
+              <div className="px-4 py-2.5">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  5月13日00:00至09:00为休市锁定时段，无法买入或卖出。请耐心等待09:00正式开盘。
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Official Launch */}
+          <div className="rounded-lg border border-app-gold/30 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-app-gold/10 border-b border-app-gold/20">
+              <Rocket className="h-4 w-4 text-app-gold" />
+              <h3 className="text-sm font-semibold text-app-gold">正式上线（5月13日 09:00 起）</h3>
+            </div>
+            <div className="divide-y divide-app-border/60">
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <Rocket className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">首次开盘结算</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">09:00</span>
+              </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <TrendingUp className="h-4 w-4 text-app-red" />
+                <span className="text-sm text-foreground">每日交易时段（北京时间）</span>
+                <span className="text-sm font-bold tabular-nums text-app-red">09:00-12:00 / 15:00-18:00</span>
+              </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <CalendarCheck className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">价格结算频率</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">每10分钟</span>
+              </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <DollarSign className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">每时段每部电影买入</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">限1次</span>
+              </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <DollarSign className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">每时段每部电影卖出</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">限1次</span>
+              </div>
+              <div className="px-4 py-2.5">
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  5月13日09:00首次开盘时，系统将根据预热期累积的净成交量一次性调整所有电影价格并展现涨跌幅。此后进入正常交易模式：每天09:00-12:00和15:00-18:00两个交易时段，每10分钟根据净成交量结算一次价格。
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Rule 1: Trading Hours */}
           <div className="rounded-lg border border-app-border overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 bg-app-bg/60 border-b border-app-border">
               <Clock className="h-4 w-4 text-app-gold" />
-              <h3 className="text-sm font-semibold text-foreground">交易时间</h3>
+              <h3 className="text-sm font-semibold text-foreground">正常交易时间</h3>
             </div>
             <div className="divide-y divide-app-border/60">
               <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
@@ -96,32 +186,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
             </div>
           </div>
 
-          {/* Rule 2: Trading Limit */}
-          <div className="rounded-lg border border-app-border overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 bg-app-bg/60 border-b border-app-border">
-              <TrendingUp className="h-4 w-4 text-app-red" />
-              <h3 className="text-sm font-semibold text-foreground">交易次数</h3>
-            </div>
-            <div className="divide-y divide-app-border/60">
-              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
-                <DollarSign className="h-4 w-4 text-app-gold" />
-                <span className="text-sm text-foreground">每部电影每时段可买入</span>
-                <span className="text-sm font-bold tabular-nums text-app-gold">1次</span>
-              </div>
-              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
-                <DollarSign className="h-4 w-4 text-app-gold" />
-                <span className="text-sm text-foreground">每部电影每时段可卖出</span>
-                <span className="text-sm font-bold tabular-nums text-app-gold">1次</span>
-              </div>
-              <div className="px-4 py-2.5">
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  买入和卖出独立计算，不可重复。例如上午时段可以买入1次后再卖出1次，但不能买入2次。
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Rule 3: Price Mechanism */}
+          {/* Rule 2: Price Mechanism */}
           <div className="rounded-lg border border-app-border overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 bg-app-bg/60 border-b border-app-border">
               <TrendingUp className="h-4 w-4 text-app-red" />
@@ -201,7 +266,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
           {/* Tips */}
           <div className="rounded-lg bg-app-gold/5 border border-app-gold/20 p-4">
             <p className="text-sm text-app-gold leading-relaxed">
-              <strong>策略提示：</strong>本金3,000，每股100，交易时段09:00-12:00 / 15:00-18:00。每部电影每时段限买入1次、限卖出1次，每人每部电影最多持有20股。明智的玩家会把握交易窗口集中押注金棕榈热门博取最高回报，或分散押注多部影片降低风险。每个10分钟结算周期内价格锁定，您可以在观察市场动向后再决定是否出手。密切关注口碑走势，在预期上涨前买入、预期下跌前卖出，同时保留部分股份等待最终颁奖结果获取分红。祝你好运！
+              <strong>预热期策略提示：</strong>预热期可自由交易不限次数，价格锁定100。这是布局的好机会——您可以不受限制地调整持仓，为5月13日09:00正式开盘做准备。建议提前研究入围影片，分散押注多部热门影片降低风险，同时重点持有金棕榈大热门等待最终分红。开盘首日将根据预热期累积的净成交量一次性调整价格，您的持仓将在那一刻开始浮动。祝你好运！
             </p>
           </div>
         </div>
