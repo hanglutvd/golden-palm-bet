@@ -192,7 +192,7 @@ export const authRouter = createRouter({
   }),
 
   forgotPassword: publicQuery
-    .input(z.object({ email: z.string().email("请输入有效的邮箱地址") }))
+    .input(z.object({ email: z.string().min(1, "请输入邮箱") }))
     .mutation(async ({ input }) => {
       const user = await findUserByEmail(input.email);
       if (!user) {
