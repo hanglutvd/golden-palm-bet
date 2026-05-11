@@ -146,10 +146,52 @@ export function formatTimeRemaining(target: Date): string {
   return `${minutes}分`;
 }
 
+// ============================================
+// PRE-LAUNCH PERIOD (before official market open)
+// ============================================
+const LAUNCH_DATE = "2026-05-13"; // 首次开盘日期
+const LAUNCH_HOUR = 9; // 首次开盘时间（北京时间）
+
 /**
- * Validate if trading is allowed, throw error if not
+ * Check if we're in the pre-launch period.
+ * Pre-launch: unlimited trading, no settlement, price locked at 100.
+ */
+export function isPreLaunch(): boolean {
+  const today = getBeijingDateStr();
+  // Before May 13: pre-launch (unlimited trading, no settlement)
+  if (today < LAUNCH_DATE) return true;
+  return false;
+}
+
+/**
+ * Check if market is locked on launch day (midnight to 9am).
+ * During this window: no trading allowed.
+ */
+export function isLaunchLock(): boolean {
+  const today = getBeijingDateStr();
+  const hour = getBeijingHour();
+  return today === LAUNCH_DATE && hour < LAUNCH_HOUR;
+}
+
+/**
+ * Validate if trading is allowed, throw error if not.
+ * Handles three phases:
+ * 1. Pre-launch (before 5/13): always allowed
+ * 2. Launch lock (5/13 00:00-09:00): not allowed
+ * 3. After 5/13 09:00: normal trading hours
  */
 export function assertTradingHours(): void {
+  // Phase 1: Pre-launch period — unlimited trading
+  if (isPreLaunch()) return;
+
+  // Phase 2: Launch day lock (midnight to 9am)
+  if (isLaunchLock()) {
+    throw new Error(
+      "戛纳电影节即将开幕！股票交易将于5月13日09:00（北京时间）正式开盘"
+    );
+  }
+
+  // Phase 3: Normal trading hours (after 5/13 09:00)
   const status = getMarketStatus();
   if (!status.isOpen) {
     const next = status.nextOpen!;

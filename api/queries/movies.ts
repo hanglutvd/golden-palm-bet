@@ -1,7 +1,7 @@
 import { getDb } from "./connection.js";
 import { movies } from "../../db/schema.js";
 import { eq, desc } from "drizzle-orm";
-import { getBeijingDateStr, getBeijingHour } from "../../contracts/market.js";
+import { getBeijingDateStr, getBeijingHour, isPreLaunch } from "../../contracts/market.js";
 
 export async function findAllMovies() {
   return getDb().query.movies.findMany({
@@ -28,6 +28,9 @@ function getSettlementKey(today: string, session: string) {
  * - reset dailyNetVolume
  */
 export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
+  // Pre-launch: skip all settlement, let netVolume accumulate until first open
+  if (isPreLaunch()) return movie;
+
   const today = getBeijingDateStr();
   const session = getBeijingHour() < 15 ? "am" : "pm";
   const settlementKey = getSettlementKey(today, session);
@@ -76,6 +79,9 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
  * - reset dailyNetVolume
  */
 export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
+  // Pre-launch: skip all settlement (netVolume accumulates until first open)
+  if (isPreLaunch()) return;
+
   const today = getBeijingDateStr();
   const nowHour = getBeijingHour();
   const nowMinute = new Date().getMinutes();

@@ -1,4 +1,4 @@
-import { getBeijingTime, getBeijingDateStr } from "../contracts/market.js";
+import { getBeijingTime, getBeijingDateStr, isPreLaunch } from "../contracts/market.js";
 import { openMarketForAll } from "./queries/movies.js";
 
 const SETTLEMENT_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
@@ -35,6 +35,12 @@ export function startDailySettlementCron() {
 
 async function runSettlement() {
   try {
+    // Pre-launch: no settlement (price stays at 100)
+    if (isPreLaunch()) {
+      console.log("[cron] Pre-launch: no settlement, price locked");
+      return;
+    }
+
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
     const beijing = new Date(utc + 8 * 3600000);

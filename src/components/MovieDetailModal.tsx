@@ -8,7 +8,7 @@ import { trpc } from '@/providers/trpc';
 import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from '@/components/GameCoin';
 import { formatPremiereDate } from '@/lib/dateUtils';
-import { getMarketStatus, formatTimeRemaining } from '@contracts/market';
+import { getMarketStatus, formatTimeRemaining, isPreLaunch } from '@contracts/market';
 import type { MovieQuote } from '@/types';
 
 interface MovieDetailModalProps {
@@ -106,7 +106,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
   const total = (price * quantity).toFixed(2);
   const trendColor = isUp ? '#4ade80' : isDown ? '#f87171' : '#a0a0a0';
   const isPending = buyMutation.isPending || sellMutation.isPending;
-  const marketClosed = !marketStatus.isOpen;
+  const marketClosed = !isPreLaunch() && !marketStatus.isOpen;
 
   const myHolding = myHoldings?.find((h) => h.movieId === movieId);
   const currentQty = myHolding?.quantity || 0;
@@ -315,7 +315,9 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
           <div className="flex items-start gap-2 rounded-lg bg-app-gold/5 border border-app-gold/10 px-3 py-2.5">
             <DollarSign className="h-4 w-4 text-app-gold flex-shrink-0 mt-0.5" />
             <p className="text-xs text-app-gold leading-relaxed">
-              交易期间价格锁定为时段开盘价，买入/卖出仅影响您的持仓与余额。上午 <strong>12:00</strong> 收盘后调整下午 15:00 开盘价，下午 <strong>18:00</strong> 收盘后调整次日 09:00 开盘价——系统根据各时段净成交量统一更新。
+              {isPreLaunch() 
+                ? "🔥 预热期：价格锁定为100，可自由交易不限次数。5月13日09:00正式开盘后，根据累积净成交量统一调整价格并展现涨跌幅。" 
+                : "交易期间价格锁定为时段开盘价，买入/卖出仅影响您的持仓与余额。上午 12:00 收盘后调整下午 15:00 开盘价，下午 18:00 收盘后调整次日 09:00 开盘价——系统根据各时段净成交量统一更新。"}
             </p>
           </div>
         </div>

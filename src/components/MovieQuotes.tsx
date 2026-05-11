@@ -58,7 +58,7 @@ export function MovieQuotes() {
                 </TooltipTrigger>
                 <TooltipContent side="right" className="bg-app-card border-app-border max-w-xs">
                   <p className="text-xs text-muted-foreground">
-                    交易时段（09:00-12:00 / 15:00-18:00）每10分钟根据净成交量自动调整价格，涨跌幅反映本时段累计变化。
+                    预热期：价格锁定为100，可自由交易不限次数。5月13日09:00正式开盘后，每10分钟根据净成交量调整价格并展现涨跌幅。
                   </p>
                 </TooltipContent>
               </Tooltip>

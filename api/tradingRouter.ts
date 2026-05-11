@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware.js";
-import { assertTradingHours, getCurrentSession, getBeijingDateStr } from "../contracts/market.js";
+import { assertTradingHours, getCurrentSession, getBeijingDateStr, isPreLaunch } from "../contracts/market.js";
 import { TRPCError } from "@trpc/server";
 import { findMovieById, findAllMovies, incrementDailyNetVolume } from "./queries/movies.js";
 import { findHolding, upsertHolding, findHoldingsByUser } from "./queries/holdings.js";
@@ -18,6 +18,12 @@ async function checkSessionTradeLimit(
   tradeType: "buy" | "sell"
 ) {
   const session = getCurrentSession();
+
+  // Pre-launch: no trade limit (unlimited buys/sells)
+  if (isPreLaunch()) {
+    return session || "am";
+  }
+
   if (!session) {
     throw new Error("当前为非交易时段");
   }
