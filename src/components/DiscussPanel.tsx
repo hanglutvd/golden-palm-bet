@@ -326,11 +326,14 @@ export function DiscussPanel() {
                       placeholder={replyTarget ? `回复 ${replyTarget.username}...` : '发表你的看法...'}
                       maxLength={300}
                       rows={3}
-                      className="flex-1 rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-app-gold/50 resize-none border border-app-border"
+                      className="flex-1 rounded-md px-3 py-2 text-sm resize-none border border-app-border focus:outline-none focus:ring-1 focus:ring-app-gold/50"
                       style={{
                         touchAction: 'manipulation',
                         WebkitAppearance: 'none',
-                        backgroundColor: 'hsl(40 10% 12%)',
+                        backgroundColor: '#1a1917',
+                        color: '#e8e6e3',
+                        WebkitTextFillColor: '#e8e6e3',
+                        caretColor: '#d4a574',
                         minHeight: '80px',
                         lineHeight: '1.5',
                       }}
@@ -338,7 +341,7 @@ export function DiscussPanel() {
                     <button
                       onClick={handleSend}
                       disabled={!input.trim() || createMutation.isPending}
-                      className="p-2 rounded-md bg-app-gold/10 text-app-gold hover:bg-app-gold/20 transition-colors disabled:opacity-50 flex-shrink-0"
+                      className="p-2 rounded-md bg-app-gold/10 text-app-gold hover:bg-app-gold/20 transition-colors flex-shrink-0 disabled:text-app-gold/30"
                     >
                       <Send className="h-4 w-4" />
                     </button>
