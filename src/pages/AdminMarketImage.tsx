@@ -21,6 +21,7 @@ export function AdminMarketImage() {
 
   const [files, setFiles] = useState<(File | null)[]>([null, null, null]);
   const [previews, setPreviews] = useState<(string | null)[]>([null, null, null]);
+  const [toDelete, setToDelete] = useState<boolean[]>([false, false, false]);
   const [uploading, setUploading] = useState(false);
   const inputRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
 
@@ -53,6 +54,19 @@ export function AdminMarketImage() {
     const nextPreviews = [...previews];
     nextPreviews[index] = null;
     setPreviews(nextPreviews);
+
+    // Mark existing image for deletion on save
+    const nextToDelete = [...toDelete];
+    nextToDelete[index] = true;
+    setToDelete(nextToDelete);
+  };
+
+  const handleReUpload = (index: number) => {
+    // Clear deletion flag and open file picker
+    const nextToDelete = [...toDelete];
+    nextToDelete[index] = false;
+    setToDelete(nextToDelete);
+    inputRefs[index].current?.click();
   };
 
   const handleSave = async () => {
@@ -77,7 +91,7 @@ export function AdminMarketImage() {
 
           const { url } = await res.json();
           uploadedUrls[i] = url;
-        } else if (images?.[i]) {
+        } else if (images?.[i] && !toDelete[i]) {
           uploadedUrls[i] = images[i];
         }
       }
@@ -92,7 +106,7 @@ export function AdminMarketImage() {
     }
   };
 
-  const hasChanges = files.some(Boolean);
+  const hasChanges = files.some(Boolean) || toDelete.some(Boolean);
   const hasImages = images && images.length > 0;
 
   return (
@@ -128,7 +142,7 @@ export function AdminMarketImage() {
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-              ) : images?.[i] ? (
+              ) : images?.[i] && !toDelete[i] ? (
                 <div className="relative">
                   <img src={images[i]} alt={label} className="w-full h-48 object-contain" />
                   <button
@@ -140,6 +154,12 @@ export function AdminMarketImage() {
                   <div className="absolute bottom-2 left-2 text-xs text-white bg-black/60 px-2 py-0.5 rounded">
                     当前图片
                   </div>
+                  <button
+                    onClick={() => handleReUpload(i)}
+                    className="absolute bottom-2 right-2 text-xs px-2 py-1 rounded bg-app-gold/80 text-black hover:bg-app-gold transition-colors"
+                  >
+                    上传新图片
+                  </button>
                 </div>
               ) : (
                 <div
@@ -147,7 +167,9 @@ export function AdminMarketImage() {
                   className="flex flex-col items-center justify-center h-48 cursor-pointer hover:bg-app-hover transition-colors"
                 >
                   <Upload className="h-8 w-8 text-muted-foreground/50 mb-2" />
-                  <span className="text-xs text-muted-foreground">点击上传图片</span>
+                  <span className="text-xs text-muted-foreground">
+                    {toDelete[i] ? '图片已删除，点击上传新图片' : '点击上传图片'}
+                  </span>
                 </div>
               )}
             </div>
