@@ -1,6 +1,6 @@
-import { X, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { X, BarChart3, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useCallback, useEffect } from 'react';
 import { trpc } from '@/providers/trpc';
 
 interface MarketModalProps {
@@ -12,12 +12,58 @@ export function MarketModal({ open, onClose }: MarketModalProps) {
   const { data: images, isLoading } = trpc.config.getMarketImages.useQuery(undefined, {
     enabled: open,
   });
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  if (!open) return null;
-
   const validImages = images?.filter(Boolean) || [];
   const hasImages = validImages.length > 0;
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [scale, setScale] = useState(1);
+
+  const openLightbox = useCallback(() => {
+    if (hasImages) setLightboxOpen(true);
+  }, [hasImages]);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxOpen(false);
+    setScale(1);
+  }, []);
+
+  const toggleZoom = useCallback(() => {
+    setScale((s) => (s >= 1.8 ? 1 : s + 0.8));
+  }, []);
+
+  // Keyboard: ESC to close lightbox, arrows to navigate
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') setCurrentIndex((i) => (i - 1 + validImages.length) % validImages.length);
+      if (e.key === 'ArrowRight') setCurrentIndex((i) => (i + 1) % validImages.length);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [lightboxOpen, closeLightbox, validImages.length]);
+
+  // Touch swipe support
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    let startX = 0;
+    const onTouchStart = (e: TouchEvent) => { startX = e.touches[0].clientX; };
+    const onTouchEnd = (e: TouchEvent) => {
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 60) {
+        if (dx < 0) setCurrentIndex((i) => (i + 1) % validImages.length);
+        else setCurrentIndex((i) => (i - 1 + validImages.length) % validImages.length);
+      }
+    };
+    window.addEventListener('touchstart', onTouchStart);
+    window.addEventListener('touchend', onTouchEnd);
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [lightboxOpen, validImages.length]);
+
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -65,8 +111,13 @@ export function MarketModal({ open, onClose }: MarketModalProps) {
                 <img
                   src={validImages[currentIndex]}
                   alt={`场刊评分表 ${currentIndex + 1}`}
-                  className="w-full h-auto"
+                  className="w-full h-auto cursor-zoom-in"
+                  onClick={openLightbox}
                 />
+                {/* Zoom hint overlay */}
+                <div className="absolute top-2 right-2 pointer-events-none">
+                  <span className="text-[10px] text-white/60 bg-black/40 px-1.5 py-0.5 rounded">点击查看大图</span>
+                </div>
                 {validImages.length > 1 && (
                   <>
                     <button
@@ -124,6 +175,88 @@ export function MarketModal({ open, onClose }: MarketModalProps) {
           </div>
         </div>
       </motion.div>
+
+      {/* Full-screen Lightbox */}
+      <AnimatePresence>
+        {lightboxOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90"
+            onClick={closeLightbox}
+          >
+            {/* Toolbar */}
+            <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3">
+              <span className="text-xs text-white/60">
+                {currentIndex + 1} / {validImages.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleZoom(); }}
+                  className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                  title="放大/缩小"
+                >
+                  {scale > 1 ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
+                </button>
+                <a
+                  href={validImages[currentIndex]}
+                  download={`场刊评分表_${currentIndex + 1}.jpg`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                  title="保存图片"
+                >
+                  <Download className="h-4 w-4" />
+                </a>
+                <button
+                  onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
+                  className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Image */}
+            <motion.img
+              key={currentIndex}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+              src={validImages[currentIndex]}
+              alt={`场刊评分表 ${currentIndex + 1}`}
+              className="max-w-[95vw] max-h-[85vh] object-contain cursor-default"
+              onClick={(e) => e.stopPropagation()}
+              draggable={false}
+            />
+
+            {/* Navigation arrows */}
+            {validImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => (i - 1 + validImages.length) % validImages.length); }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCurrentIndex((i) => (i + 1) % validImages.length); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
+            )}
+
+            {/* Hint */}
+            <p className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] text-white/40">
+              左右滑动切换 · 点击图片外区域关闭 · 长按图片可保存
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
