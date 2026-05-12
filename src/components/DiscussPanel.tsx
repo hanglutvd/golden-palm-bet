@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Trash2, Reply, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +10,7 @@ const PREVIEW_COUNT = 10;
 export function DiscussPanel() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [isComposing, setIsComposing] = useState(false);
   const [replyTarget, setReplyTarget] = useState<{
     id: number;
     username: string;
@@ -17,6 +18,7 @@ export function DiscussPanel() {
   } | null>(null);
   const [page, setPage] = useState(0);
   const { isAuthenticated, user } = useAuth();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const utils = trpc.useUtils();
 
@@ -59,11 +61,15 @@ export function DiscussPanel() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // Don't trigger send while IME composition is active (e.g. Chinese input)
+    if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
       e.preventDefault();
       handleSend();
     }
   };
+
+  const handleCompositionStart = () => setIsComposing(true);
+  const handleCompositionEnd = () => setIsComposing(false);
 
   const handleReply = (comment: { id: number; username: string; content: string }) => {
     setReplyTarget({ id: comment.id, username: comment.username, content: comment.content });
@@ -309,20 +315,24 @@ export function DiscussPanel() {
                   </div>
                 )}
                 {isAuthenticated ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
+                  <div className="flex items-end gap-2">
+                    <textarea
+                      ref={textareaRef}
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
+                      onCompositionStart={handleCompositionStart}
+                      onCompositionEnd={handleCompositionEnd}
                       placeholder={replyTarget ? `回复 ${replyTarget.username}...` : '发表你的看法...'}
                       maxLength={300}
-                      className="flex-1 bg-app-bg border border-app-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-app-gold/50"
+                      rows={1}
+                      className="flex-1 bg-app-bg border border-app-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-app-gold/50 resize-none min-h-[38px] max-h-[100px] leading-5"
+                      style={{ touchAction: 'manipulation' }}
                     />
                     <button
                       onClick={handleSend}
                       disabled={!input.trim() || createMutation.isPending}
-                      className="p-2 rounded-md bg-app-gold/10 text-app-gold hover:bg-app-gold/20 transition-colors disabled:opacity-50"
+                      className="p-2 rounded-md bg-app-gold/10 text-app-gold hover:bg-app-gold/20 transition-colors disabled:opacity-50 flex-shrink-0 mb-0.5"
                     >
                       <Send className="h-4 w-4" />
                     </button>
