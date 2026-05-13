@@ -1,6 +1,6 @@
 import { getDb } from "./connection.js";
 import { movies } from "../../db/schema.js";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { getBeijingDateStr, getBeijingHour, isPreLaunch } from "../../contracts/market.js";
 
 export async function findAllMovies() {
@@ -126,12 +126,14 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
 }
 
 export async function incrementDailyNetVolume(movieId: number, delta: number) {
-  let movie = await findMovieById(movieId);
+  const movie = await findMovieById(movieId);
   if (!movie) return;
   await ensureMovieMarketOpen(movie);
-  movie = await findMovieById(movieId);
-  if (!movie) return;
-  await getDb().update(movies).set({ dailyNetVolume: Number(movie.dailyNetVolume) + delta, updatedAt: new Date() }).where(eq(movies.id, movieId));
+  // Use SQL atomic update to prevent race conditions under concurrent trades
+  await getDb()
+    .update(movies)
+    .set({ dailyNetVolume: sql`cast(daily_net_volume as real) + ${delta}`, updatedAt: new Date() })
+    .where(eq(movies.id, movieId));
 }
 
 export async function seedMovies() {
