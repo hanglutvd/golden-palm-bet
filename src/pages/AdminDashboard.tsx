@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import {
   Users, Film, BookOpen, ArrowUpRight, ArrowDownRight,
-  RefreshCw, AlertTriangle, Play
+  RefreshCw, AlertTriangle, Play, Star, TrendingUp, TrendingDown,
+  Zap, Trash2, Plus
 } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 import { GameCoin } from '@/components/GameCoin';
@@ -11,6 +12,7 @@ export function AdminDashboard() {
   const { data: movieList } = trpc.movie.list.useQuery();
 
   const [confirming, setConfirming] = useState(false);
+  const [ratings, setRatings] = useState<Record<number, number>>({});
   const utils = trpc.useUtils();
 
   const resetMutation = trpc.admin.resetPrices.useMutation({
@@ -27,6 +29,48 @@ export function AdminDashboard() {
     },
     onError: (err) => {
       alert(err.message || '修复失败');
+    },
+  });
+
+  const [eventForm, setEventForm] = useState<{ movieId: number; impactPercent: string; cycles: string }>({
+    movieId: 0, impactPercent: '', cycles: '',
+  });
+
+  const { data: activeEvents } = trpc.admin.listRatingEvents.useQuery(undefined, {
+    enabled: isAdmin,
+  });
+
+  const createEventMutation = trpc.admin.createRatingEvent.useMutation({
+    onSuccess: (data) => {
+      alert(data.message);
+      utils.invalidate();
+      setEventForm({ movieId: 0, impactPercent: '', cycles: '' });
+    },
+    onError: (err) => alert(err.message || '创建失败'),
+  });
+
+  const deleteEventMutation = trpc.admin.deleteRatingEvent.useMutation({
+    onSuccess: () => {
+      utils.invalidate();
+    },
+    onError: (err) => alert(err.message || '删除失败'),
+  });
+
+  const updateRatingsMutation = trpc.admin.updateRatings.useMutation({
+    onSuccess: (data) => {
+      utils.invalidate();
+      const adjusted = data.results.filter((r: any) => r.adjusted);
+      if (adjusted.length === 0) {
+        alert('评分未变化，无价格调整');
+        return;
+      }
+      const msg = adjusted.map((r: any) =>
+        `${r.name}: ${r.oldRating}→${r.newRating} | 价格 ${r.oldPrice}→${r.newPrice} (${r.changePercent >= 0 ? '+' : ''}${r.changePercent}%)`
+      ).join('\n');
+      alert(`评分更新完成，${adjusted.length} 部电影价格已调整：\n\n${msg}`);
+    },
+    onError: (err) => {
+      alert(err.message || '评分更新失败');
     },
   });
 
@@ -144,6 +188,174 @@ export function AdminDashboard() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Rating Events: Word-of-Mouth Price Impacts */}
+      <div className="rounded-lg bg-app-card border border-app-border p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-app-gold" />
+            <span className="text-sm font-medium text-foreground">口碑事件管理</span>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          为电影设置口碑事件，直接影响股价。负值=口碑崩了（跌），正值=口碑爆发（涨）。每个结算周期（10分钟）衰减一次，持续多个周期后自动消失。
+        </p>
+
+        {/* Create event form */}
+        <div className="flex flex-wrap items-end gap-2 p-3 rounded-md border border-app-border/60 bg-app-bg/40">
+          <select
+            value={eventForm.movieId}
+            onChange={(e) => setEventForm((prev) => ({ ...prev, movieId: Number(e.target.value) }))}
+            className="min-w-[140px] bg-app-bg border border-app-border rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none focus:border-app-gold/50"
+          >
+            <option value={0}>选择电影</option>
+            {movieList?.map((m: any) => (
+              <option key={m.id} value={m.id}>{m.name}</option>
+            ))}
+          </select>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              value={eventForm.impactPercent}
+              onChange={(e) => setEventForm((prev) => ({ ...prev, impactPercent: e.target.value }))}
+              placeholder="-30"
+              min={-99}
+              max={99}
+              className="w-16 bg-app-bg border border-app-border rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none focus:border-app-gold/50"
+            />
+            <span className="text-xs text-muted-foreground">%</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              value={eventForm.cycles}
+              onChange={(e) => setEventForm((prev) => ({ ...prev, cycles: e.target.value }))}
+              placeholder="3"
+              min={1}
+              max={100}
+              className="w-14 bg-app-bg border border-app-border rounded-md px-2 py-1.5 text-sm text-foreground focus:outline-none focus:border-app-gold/50"
+            />
+            <span className="text-xs text-muted-foreground">周期</span>
+          </div>
+          <button
+            onClick={() => {
+              if (!eventForm.movieId || !eventForm.impactPercent || !eventForm.cycles) {
+                alert('请填写完整');
+                return;
+              }
+              createEventMutation.mutate({
+                movieId: eventForm.movieId,
+                impactPercent: Number(eventForm.impactPercent),
+                cycles: Number(eventForm.cycles),
+              });
+            }}
+            disabled={createEventMutation.isPending}
+            className="px-3 py-1.5 rounded-md bg-app-gold/20 text-app-gold text-sm hover:bg-app-gold/30 transition-colors disabled:opacity-50 flex items-center gap-1"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            创建
+          </button>
+        </div>
+
+        {/* Active events list */}
+        <div className="space-y-1.5 max-h-48 overflow-y-auto">
+          {activeEvents && activeEvents.length > 0 ? (
+            activeEvents.map((ev: any) => (
+              <div key={ev.id} className="flex items-center justify-between px-3 py-2 rounded-md border border-app-border/40 bg-app-bg/30">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-sm text-foreground truncate">{ev.movieName}</span>
+                  <span className={`text-sm font-bold tabular-nums ${ev.impactPercent >= 0 ? 'text-app-red' : 'text-app-green'}`}>
+                    {ev.impactPercent > 0 ? '+' : ''}{ev.impactPercent}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    剩余 {ev.remainingCycles}/{ev.totalCycles} 周期
+                  </span>
+                  <div className="w-16 h-1.5 bg-app-border/40 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${ev.impactPercent >= 0 ? 'bg-app-red' : 'bg-app-green'}`}
+                      style={{ width: `${(ev.remainingCycles / ev.totalCycles) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (confirm(`删除「${ev.movieName}」的口碑事件？`)) {
+                      deleteEventMutation.mutate({ eventId: ev.id });
+                    }
+                  }}
+                  className="p-1 rounded text-muted-foreground hover:text-app-red transition-colors flex-shrink-0"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-3">暂无活跃事件</p>
+          )}
+        </div>
+      </div>
+
+      {/* Rating Management */}
+      <div className="rounded-lg bg-app-card border border-app-border p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Star className="h-4 w-4 text-app-gold" />
+            <span className="text-sm font-medium text-foreground">口碑评分管理</span>
+          </div>
+          <button
+            onClick={() => {
+              if (!movieList) return;
+              const payload = movieList
+                .filter((m: any) => ratings[m.id] !== undefined && ratings[m.id] !== m.rating)
+                .map((m: any) => ({ movieId: m.id, rating: ratings[m.id] }));
+              if (payload.length === 0) {
+                alert('没有评分变化，无需更新');
+                return;
+              }
+              updateRatingsMutation.mutate({ ratings: payload });
+            }}
+            disabled={updateRatingsMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-app-gold/30 text-xs text-app-gold hover:bg-app-gold/10 transition-colors disabled:opacity-50"
+          >
+            {updateRatingsMutation.isPending ? '更新中...' : '应用评分调整'}
+          </button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          根据首映口碑、场刊评分和媒体评价，为每部电影打分（1-10）。评分变化会直接驱动价格涨跌——评分上升则价格上涨，评分下降则价格下跌。
+        </p>
+
+        {/* Movie rating grid */}
+        <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto">
+          {movieList?.map((movie: any) => {
+            const currentRating = ratings[movie.id] !== undefined ? ratings[movie.id] : movie.rating;
+            const hasChanged = ratings[movie.id] !== undefined && ratings[movie.id] !== movie.rating;
+            return (
+              <div key={movie.id} className={`flex items-center justify-between px-3 py-2 rounded-md border ${hasChanged ? 'border-app-gold/50 bg-app-gold/5' : 'border-app-border/60'}`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-sm text-foreground truncate">{movie.name}</span>
+                  <span className="text-xs text-muted-foreground">{movie.director}</span>
+                  <span className="text-xs tabular-nums text-muted-foreground">{Number(movie.price).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
+                    <button
+                      key={score}
+                      onClick={() => setRatings((prev) => ({ ...prev, [movie.id]: score }))}
+                      className={`w-6 h-6 rounded text-[10px] font-medium transition-colors ${
+                        score <= currentRating
+                          ? 'bg-app-gold text-black'
+                          : 'bg-app-border/30 text-muted-foreground hover:bg-app-border/60'
+                      }`}
+                    >
+                      {score}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Reset button */}

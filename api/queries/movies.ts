@@ -1,5 +1,5 @@
 import { getDb } from "./connection.js";
-import { movies } from "../../db/schema.js";
+import { movies, ratingEvents } from "../../db/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { getBeijingDateStr, getBeijingHour, isPreLaunch, getPriceSensitivity } from "../../contracts/market.js";
 
@@ -40,35 +40,54 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   const prevPrice = Number(movie.currentPrice);
   const netVolume = Number(movie.dailyNetVolume);
 
+  // Step 1: Trading volume impact
+  let newPrice = prevPrice;
   if (netVolume !== 0) {
     const sensitivity = getPriceSensitivity(prevPrice);
-    let newPrice = prevPrice * (1 + netVolume * sensitivity);
-    if (newPrice < 1) newPrice = 1;
-
-    await getDb()
-      .update(movies)
-      .set({
-        currentPrice: String(newPrice.toFixed(2)),
-        basePrice: String(prevPrice.toFixed(2)),
-        dailyNetVolume: 0,
-        lastOpenDate: settlementKey,
-        updatedAt: new Date(),
-      })
-      .where(eq(movies.id, movie.id));
-
-    return { ...movie, currentPrice: String(newPrice.toFixed(2)), basePrice: String(prevPrice.toFixed(2)), dailyNetVolume: 0, lastOpenDate: settlementKey };
-  } else {
-    // No trades: only update lastOpenDate
-    await getDb()
-      .update(movies)
-      .set({
-        lastOpenDate: settlementKey,
-        updatedAt: new Date(),
-      })
-      .where(eq(movies.id, movie.id));
-
-    return { ...movie, lastOpenDate: settlementKey };
+    newPrice = prevPrice * (1 + netVolume * sensitivity);
   }
+
+  // Step 2: Apply active rating events (same as openMarketForAll)
+  const activeEvents = await getDb()
+    .select()
+    .from(ratingEvents)
+    .where(eq(ratingEvents.movieId, movie.id));
+
+  let totalEventImpact = 0;
+  for (const ev of activeEvents) {
+    const decayFactor = ev.remainingCycles / ev.totalCycles;
+    const cycleImpact = (ev.impactPercent / 100) * decayFactor;
+    totalEventImpact += cycleImpact;
+
+    if (ev.remainingCycles <= 1) {
+      await getDb().delete(ratingEvents).where(eq(ratingEvents.id, ev.id));
+    } else {
+      await getDb()
+        .update(ratingEvents)
+        .set({ remainingCycles: ev.remainingCycles - 1 })
+        .where(eq(ratingEvents.id, ev.id));
+    }
+  }
+
+  if (totalEventImpact !== 0) {
+    newPrice = newPrice * (1 + totalEventImpact);
+  }
+
+  if (newPrice < 1) newPrice = 1;
+
+  // Step 3: Update (always, to set lastOpenDate and apply events)
+  await getDb()
+    .update(movies)
+    .set({
+      currentPrice: String(newPrice.toFixed(2)),
+      basePrice: String(prevPrice.toFixed(2)),
+      dailyNetVolume: 0,
+      lastOpenDate: settlementKey,
+      updatedAt: new Date(),
+    })
+    .where(eq(movies.id, movie.id));
+
+  return { ...movie, currentPrice: String(newPrice.toFixed(2)), basePrice: String(prevPrice.toFixed(2)), dailyNetVolume: 0, lastOpenDate: settlementKey };
 }
 
 /**
@@ -97,33 +116,55 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
     const prevPrice = Number(movie.currentPrice);
     const netVolume = Number(movie.dailyNetVolume);
 
+    // Step 1: Trading volume impact
+    let newPrice = prevPrice;
     if (netVolume !== 0) {
-      // Has trades: update price and basePrice
       const sensitivity = getPriceSensitivity(prevPrice);
-      let newPrice = prevPrice * (1 + netVolume * sensitivity);
-      if (newPrice < 1) newPrice = 1;
-
-      await getDb()
-        .update(movies)
-        .set({
-          currentPrice: String(newPrice.toFixed(2)),
-          basePrice: String(prevPrice.toFixed(2)),
-          dailyNetVolume: 0,
-          lastOpenDate: settlementKey,
-          updatedAt: new Date(),
-        })
-        .where(eq(movies.id, movie.id));
-    } else {
-      // No trades: keep price and basePrice unchanged
-      // Only update lastOpenDate to prevent repeated settlement
-      await getDb()
-        .update(movies)
-        .set({
-          lastOpenDate: settlementKey,
-          updatedAt: new Date(),
-        })
-        .where(eq(movies.id, movie.id));
+      newPrice = prevPrice * (1 + netVolume * sensitivity);
     }
+
+    // Step 2: Admin-set rating events (word-of-mouth impact)
+    // Events apply on every settlement, decaying linearly over their duration
+    const activeEvents = await getDb()
+      .select()
+      .from(ratingEvents)
+      .where(eq(ratingEvents.movieId, movie.id));
+
+    let totalEventImpact = 0;
+    for (const ev of activeEvents) {
+      // Linear decay: first cycle = full impact, last cycle = 1/N impact
+      const decayFactor = ev.remainingCycles / ev.totalCycles;
+      const cycleImpact = (ev.impactPercent / 100) * decayFactor;
+      totalEventImpact += cycleImpact;
+
+      // Decrement or delete exhausted events
+      if (ev.remainingCycles <= 1) {
+        await getDb().delete(ratingEvents).where(eq(ratingEvents.id, ev.id));
+      } else {
+        await getDb()
+          .update(ratingEvents)
+          .set({ remainingCycles: ev.remainingCycles - 1 })
+          .where(eq(ratingEvents.id, ev.id));
+      }
+    }
+
+    if (totalEventImpact !== 0) {
+      newPrice = newPrice * (1 + totalEventImpact);
+    }
+
+    if (newPrice < 1) newPrice = 1;
+
+    // Step 3: Update with combined price (trading + events)
+    await getDb()
+      .update(movies)
+      .set({
+        currentPrice: String(newPrice.toFixed(2)),
+        basePrice: String(prevPrice.toFixed(2)),
+        dailyNetVolume: 0,
+        lastOpenDate: settlementKey,
+        updatedAt: new Date(),
+      })
+      .where(eq(movies.id, movie.id));
   }
 }
 

@@ -24,8 +24,26 @@ export const movies = sqliteTable("movies", {
   dailyNetVolume: integer("daily_net_volume").notNull().default(0),
   lastOpenDate: text("last_open_date").notNull().default(""),
   premiereDate: text("premiere_date"),
+  // Critical rating field: admin sets 1-10 score based on festival reception
+  // Price adjusts proportionally when rating changes
+  rating: integer("rating").notNull().default(5),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+});
+
+// Rating events: admin-set word-of-mouth impacts that directly move prices
+// Example: a film bombs at premiere → create -30% event for 3 cycles
+// Each settlement applies a portion of the impact (linear decay over cycles)
+export const ratingEvents = sqliteTable("rating_events", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  movieId: integer("movie_id").notNull(),
+  // Impact on price: negative = crash, positive = surge
+  // e.g. -30 means price drops 30% over the event duration
+  impactPercent: integer("impact_percent").notNull(),
+  // How many settlement cycles remain (each cycle = 10 min during trading hours)
+  remainingCycles: integer("remaining_cycles").notNull(),
+  totalCycles: integer("total_cycles").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
 export const holdings = sqliteTable("holdings", {

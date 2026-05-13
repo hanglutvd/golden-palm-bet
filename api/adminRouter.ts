@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createRouter, adminQuery } from "./middleware.js";
 import { getDb } from "./queries/connection.js";
-import { movies, users, diaries, holdings, transactions } from "../db/schema.js";
+import { movies, users, diaries, holdings, transactions, ratingEvents } from "../db/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { openMarketForAll, findAllMovies } from "./queries/movies.js";
 import { getBeijingDateStr } from "../contracts/market.js";
@@ -96,6 +96,81 @@ export const adminRouter = createRouter({
         .set({ premiereDate: input.premiereDate || null })
         .where(eq(movies.id, input.id));
       return { success: true };
+    }),
+
+  // Update movie ratings and apply proportional price adjustments
+  updateRatings: adminQuery
+    .input(
+      z.object({
+        ratings: z.array(
+          z.object({
+            movieId: z.number(),
+            rating: z.number().min(1).max(10),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const results = [];
+
+      for (const r of input.ratings) {
+        const movie = await db.query.movies.findFirst({
+          where: eq(movies.id, r.movieId),
+        });
+        if (!movie) continue;
+
+        const oldRating = Number(movie.rating);
+        const newRating = r.rating;
+
+        if (oldRating === newRating) {
+          results.push({
+            movieId: r.movieId,
+            name: movie.name,
+            oldRating,
+            newRating,
+            oldPrice: Number(movie.currentPrice),
+            newPrice: Number(movie.currentPrice),
+            changePercent: 0,
+            adjusted: false,
+          });
+          continue;
+        }
+
+        const oldPrice = Number(movie.currentPrice);
+        // Price adjusts proportionally to rating change
+        // Linear scaling: newPrice = oldPrice * (newRating / oldRating)
+        // Exponent 0.8 dampens extreme swings while preserving direction
+        const ratio = newRating / oldRating;
+        const damping = 0.8; // Dampens extreme moves: 10->5 is -37% instead of -50%
+        const adjustmentFactor = Math.pow(ratio, damping);
+        let newPrice = oldPrice * adjustmentFactor;
+        if (newPrice < 1) newPrice = 1;
+
+        await db
+          .update(movies)
+          .set({
+            currentPrice: String(newPrice.toFixed(2)),
+            basePrice: String(oldPrice.toFixed(2)), // base = old price so change% reflects the adjustment
+            rating: newRating,
+            updatedAt: new Date(),
+          })
+          .where(eq(movies.id, r.movieId));
+
+        const changePercent = ((newPrice - oldPrice) / oldPrice) * 100;
+        results.push({
+          movieId: r.movieId,
+          name: movie.name,
+          oldRating,
+          newRating,
+          oldPrice,
+          newPrice: Number(newPrice.toFixed(2)),
+          changePercent: Number(changePercent.toFixed(2)),
+          adjusted: true,
+        });
+      }
+
+      return { results };
     }),
 
   // Award management - set winners and distribute dividends
@@ -217,7 +292,10 @@ export const adminRouter = createRouter({
     // 3. Clear all transaction records
     await db.delete(transactions);
 
-    // 4. Reset all user balances to 3000
+    // 4. Clear all rating events (word-of-mouth impacts)
+    await db.delete(ratingEvents);
+
+    // 5. Reset all user balances to 3000
     await db
       .update(users)
       .set({ balance: "3000.00" });
@@ -240,6 +318,67 @@ export const adminRouter = createRouter({
         success: true,
         message: `已强制结算（session=${session}）`,
       };
+    }),
+
+  // Rating events: admin-set word-of-mouth price impacts
+  listRatingEvents: adminQuery.query(async () => {
+    const db = getDb();
+    const events = await db.select().from(ratingEvents).orderBy(desc(ratingEvents.createdAt));
+    const moviesList = await findAllMovies();
+    const movieMap = new Map(moviesList.map((m) => [m.id, m.name]));
+    return events.map((ev) => ({
+      ...ev,
+      movieName: movieMap.get(ev.movieId) || "未知",
+    }));
+  }),
+
+  createRatingEvent: adminQuery
+    .input(
+      z.object({
+        movieId: z.number(),
+        impactPercent: z.number().min(-99).max(99),
+        cycles: z.number().min(1).max(100),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const movie = await db.query.movies.findFirst({
+        where: eq(movies.id, input.movieId),
+      });
+      if (!movie) throw new Error("电影不存在");
+
+      // Check if this movie already has an active event — prevent stacking
+      const existing = await db
+        .select()
+        .from(ratingEvents)
+        .where(eq(ratingEvents.movieId, input.movieId));
+      if (existing.length > 0) {
+        throw new Error(
+          `「${movie.name}」已有活跃口碑事件（${existing[0].impactPercent}%），请先删除旧事件再创建新事件`,
+        );
+      }
+
+      await db.insert(ratingEvents).values({
+        movieId: input.movieId,
+        impactPercent: input.impactPercent,
+        remainingCycles: input.cycles,
+        totalCycles: input.cycles,
+      });
+
+      return {
+        movieName: movie.name,
+        impactPercent: input.impactPercent,
+        cycles: input.cycles,
+        message: `已为「${movie.name}」设置口碑事件：${input.impactPercent > 0 ? "+" : ""}${input.impactPercent}%，持续 ${input.cycles} 个结算周期`,
+      };
+    }),
+
+  deleteRatingEvent: adminQuery
+    .input(z.object({ eventId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      await db.delete(ratingEvents).where(eq(ratingEvents.id, input.eventId));
+      return { message: "事件已删除" };
     }),
 
   // Fix corrupted basePrice values
