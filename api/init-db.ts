@@ -4,9 +4,41 @@ import { seedMovies } from "./queries/movies.js";
 let initialized = false;
 
 export function initDatabase() {
-  if (initialized) return;
-
   const db = getDb();
+
+  // === MIGRATIONS: always run (idempotent) ===
+  // These are safe to run on every startup
+
+  // Migrate: add rating column to movies table
+  try { db.run(`ALTER TABLE movies ADD COLUMN rating INTEGER NOT NULL DEFAULT 5`); } catch {}
+
+  // Rating events table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS rating_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      movie_id INTEGER NOT NULL,
+      impact_percent INTEGER NOT NULL,
+      remaining_cycles INTEGER NOT NULL,
+      total_cycles INTEGER NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+
+  // Migrate: add username_changed_at to users table
+  try { db.run(`ALTER TABLE users ADD COLUMN username_changed_at INTEGER`); } catch {}
+
+  // Migrate: add reply columns to existing comments table
+  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to INTEGER`); } catch {}
+  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to_username TEXT`); } catch {}
+  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to_content TEXT`); } catch {}
+
+  // Migrate: add cover_image columns to diaries
+  try { db.run(`ALTER TABLE diaries ADD COLUMN cover_image_1 TEXT`); } catch {}
+  try { db.run(`ALTER TABLE diaries ADD COLUMN cover_image_2 TEXT`); } catch {}
+  try { db.run(`ALTER TABLE diaries ADD COLUMN cover_image_3 TEXT`); } catch {}
+
+  // === INITIAL SETUP: only run once ===
+  if (initialized) return;
 
   // Create tables if they don't exist
   db.run(`
@@ -35,6 +67,7 @@ export function initDatabase() {
       daily_net_volume INTEGER NOT NULL DEFAULT 0,
       last_open_date TEXT NOT NULL DEFAULT '',
       premiere_date TEXT,
+      rating INTEGER NOT NULL DEFAULT 5,
       created_at INTEGER NOT NULL DEFAULT (unixepoch()),
       updated_at INTEGER NOT NULL DEFAULT (unixepoch())
     )
@@ -105,29 +138,6 @@ export function initDatabase() {
       reply_to INTEGER,
       reply_to_username TEXT,
       reply_to_content TEXT,
-      created_at INTEGER NOT NULL DEFAULT (unixepoch())
-    )
-  `);
-
-  // Migrate: add reply columns to existing comments table
-  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to INTEGER`); } catch {}
-  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to_username TEXT`); } catch {}
-  try { db.run(`ALTER TABLE comments ADD COLUMN reply_to_content TEXT`); } catch {}
-
-  // Migrate: add username_changed_at to users table
-  try { db.run(`ALTER TABLE users ADD COLUMN username_changed_at INTEGER`); } catch {}
-
-  // Migrate: add rating column to movies table (for word-of-mouth price impacts)
-  try { db.run(`ALTER TABLE movies ADD COLUMN rating INTEGER NOT NULL DEFAULT 5`); } catch {}
-
-  // Rating events table: admin-set word-of-mouth price impacts
-  db.run(`
-    CREATE TABLE IF NOT EXISTS rating_events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      movie_id INTEGER NOT NULL,
-      impact_percent INTEGER NOT NULL,
-      remaining_cycles INTEGER NOT NULL,
-      total_cycles INTEGER NOT NULL,
       created_at INTEGER NOT NULL DEFAULT (unixepoch())
     )
   `);
