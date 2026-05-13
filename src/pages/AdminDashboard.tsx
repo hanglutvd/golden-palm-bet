@@ -37,7 +37,7 @@ export function AdminDashboard() {
   });
 
   const { data: activeEvents } = trpc.admin.listRatingEvents.useQuery(undefined, {
-    enabled: data?.isAdmin ?? false,
+    retry: false,
   });
 
   const createEventMutation = trpc.admin.createRatingEvent.useMutation({
