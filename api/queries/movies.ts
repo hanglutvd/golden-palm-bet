@@ -78,6 +78,7 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   // Step 3: Only update price/basePrice if something actually changed
   const priceChanged = Math.abs(newPrice - prevPrice) > 0.001;
   if (priceChanged) {
+    console.log(`[ensureMovieMarketOpen] ${movie.name}: prev=${prevPrice}, new=${newPrice.toFixed(2)}, base=${prevPrice.toFixed(2)}, netVolume=${netVolume}, events=${activeEvents.length}`);
     await getDb()
       .update(movies)
       .set({
@@ -91,6 +92,7 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
 
     return { ...movie, currentPrice: String(newPrice.toFixed(2)), basePrice: String(prevPrice.toFixed(2)), dailyNetVolume: 0, lastOpenDate: settlementKey };
   } else {
+    console.log(`[ensureMovieMarketOpen] ${movie.name}: NO CHANGE (prev=${prevPrice}, new=${newPrice.toFixed(2)}), base=${movie.basePrice}, netVolume=${netVolume}`);
     await getDb()
       .update(movies)
       .set({
@@ -170,6 +172,7 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
     // Step 3: Only update price/basePrice if something actually changed
     const priceChanged = Math.abs(newPrice - prevPrice) > 0.001;
     if (priceChanged) {
+      console.log(`[openMarketForAll] ${movie.name}: prev=${prevPrice}, new=${newPrice.toFixed(2)}, base=${prevPrice.toFixed(2)}, netVolume=${netVolume}, events=${activeEvents.length}`);
       await getDb()
         .update(movies)
         .set({
@@ -181,6 +184,7 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
         })
         .where(eq(movies.id, movie.id));
     } else {
+      console.log(`[openMarketForAll] ${movie.name}: NO CHANGE (prev=${prevPrice}, new=${newPrice.toFixed(2)}), base=${movie.basePrice}, netVolume=${netVolume}`);
       // No price movement: only update lastOpenDate to prevent re-processing
       await getDb()
         .update(movies)

@@ -22,10 +22,12 @@ export function startDailySettlementCron() {
     }
 
     const minutesUntil = Math.round(msUntil / 60000);
-    console.log(`[cron] Next settlement in ${minutesUntil}m`);
+    console.log(`[cron] Next settlement in ${minutesUntil}m (${new Date(Date.now() + msUntil).toISOString()})`);
 
     setTimeout(() => {
+      console.log(`[cron] ====== SETTLEMENT TRIGGERED at ${new Date().toISOString()} ======`);
       runSettlement();
+      console.log(`[cron] ====== SETTLEMENT COMPLETED ======`);
       scheduleNext();
     }, msUntil);
   };
