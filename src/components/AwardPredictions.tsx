@@ -10,14 +10,14 @@ interface AwardResult {
 }
 
 const awardsData: AwardResult[] = [
-  { name: '金棕榈奖', dividend: 500.00, predictedWinners: ['盒子里的羊'] },
-  { name: '评审团大奖', dividend: 200.00, predictedWinners: ['平行故事'] },
-  { name: '最佳导演', dividend: 150.00, predictedWinners: ['是枝裕和'] },
-  { name: '最佳男演员', dividend: 100.00, predictedWinners: ['塞巴斯蒂安·斯坦'] },
-  { name: '最佳女演员', dividend: 100.00, predictedWinners: ['桑德拉·惠勒'] },
-  { name: '最佳编剧', dividend: 100.00, predictedWinners: ['阿斯加·法哈蒂'] },
-  { name: '评审团奖', dividend: 100.00, predictedWinners: ['苦涩的圣诞节'] },
-  { name: '特别奖（若有）', dividend: 50.00, predictedWinners: ['待定'] },
+  { name: '金棕榈奖', dividend: 2000.00, predictedWinners: ['盒子里的羊'] },
+  { name: '评审团大奖', dividend: 1500.00, predictedWinners: ['平行故事'] },
+  { name: '最佳导演', dividend: 1000.00, predictedWinners: ['是枝裕和'] },
+  { name: '最佳男演员', dividend: 800.00, predictedWinners: ['塞巴斯蒂安·斯坦'] },
+  { name: '最佳女演员', dividend: 800.00, predictedWinners: ['桑德拉·惠勒'] },
+  { name: '最佳编剧', dividend: 800.00, predictedWinners: ['阿斯加·法哈蒂'] },
+  { name: '评审团奖', dividend: 800.00, predictedWinners: ['苦涩的圣诞节'] },
+  { name: '特别奖（若有）', dividend: 500.00, predictedWinners: ['待定'] },
 ];
 
 export function AwardPredictions() {
@@ -110,7 +110,7 @@ export function AwardPredictions() {
               </div>
               <span
                 className={`text-sm font-semibold tabular-nums flex-shrink-0 mt-0.5 ${
-                  award.dividend >= 300 ? 'text-app-gold' : 'text-foreground'
+                  award.dividend >= 1000 ? 'text-app-gold' : 'text-foreground'
                 }`}
               >
                 {award.dividend.toFixed(2)}

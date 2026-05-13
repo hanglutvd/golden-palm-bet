@@ -219,7 +219,7 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
               <h3 className="text-sm font-semibold text-foreground">分红标准</h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed pl-6">
-              获奖影片的分红标准如下。请注意，金棕榈奖的分红远高于其他奖项——这意味着押中金棕榈热门影片将带来巨大的回报。
+              获奖影片的分红标准如下。金棕榈奖每股分红2000，评审团大奖1500，押中任意奖项都有丰厚回报。分散押注多部影片是稳健策略。
             </p>
           </div>
 
@@ -235,14 +235,14 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
             </div>
             <div className="divide-y divide-app-border/60">
               {[
-                { name: '金棕榈奖', dividend: 500.00, highlight: true },
-                { name: '评审团大奖', dividend: 200.00, highlight: false },
-                { name: '最佳导演', dividend: 150.00, highlight: false },
-                { name: '最佳女演员', dividend: 100.00, highlight: false },
-                { name: '最佳男演员', dividend: 100.00, highlight: false },
-                { name: '最佳编剧', dividend: 100.00, highlight: false },
-                { name: '评审团奖', dividend: 100.00, highlight: false },
-                { name: '特别奖（若有）', dividend: 50.00, highlight: false },
+                { name: '金棕榈奖', dividend: 2000.00, highlight: true },
+                { name: '评审团大奖', dividend: 1500.00, highlight: false },
+                { name: '最佳导演', dividend: 1000.00, highlight: false },
+                { name: '最佳男演员', dividend: 800.00, highlight: false },
+                { name: '最佳女演员', dividend: 800.00, highlight: false },
+                { name: '最佳编剧', dividend: 800.00, highlight: false },
+                { name: '评审团奖', dividend: 800.00, highlight: false },
+                { name: '特别奖（若有）', dividend: 500.00, highlight: false },
               ].map((item, index) => (
                 <div
                   key={index}
