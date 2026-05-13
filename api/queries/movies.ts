@@ -75,19 +75,32 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
 
   if (newPrice < 1) newPrice = 1;
 
-  // Step 3: Update (always, to set lastOpenDate and apply events)
-  await getDb()
-    .update(movies)
-    .set({
-      currentPrice: String(newPrice.toFixed(2)),
-      basePrice: String(prevPrice.toFixed(2)),
-      dailyNetVolume: 0,
-      lastOpenDate: settlementKey,
-      updatedAt: new Date(),
-    })
-    .where(eq(movies.id, movie.id));
+  // Step 3: Only update price/basePrice if something actually changed
+  const priceChanged = Math.abs(newPrice - prevPrice) > 0.001;
+  if (priceChanged) {
+    await getDb()
+      .update(movies)
+      .set({
+        currentPrice: String(newPrice.toFixed(2)),
+        basePrice: String(prevPrice.toFixed(2)),
+        dailyNetVolume: 0,
+        lastOpenDate: settlementKey,
+        updatedAt: new Date(),
+      })
+      .where(eq(movies.id, movie.id));
 
-  return { ...movie, currentPrice: String(newPrice.toFixed(2)), basePrice: String(prevPrice.toFixed(2)), dailyNetVolume: 0, lastOpenDate: settlementKey };
+    return { ...movie, currentPrice: String(newPrice.toFixed(2)), basePrice: String(prevPrice.toFixed(2)), dailyNetVolume: 0, lastOpenDate: settlementKey };
+  } else {
+    await getDb()
+      .update(movies)
+      .set({
+        lastOpenDate: settlementKey,
+        updatedAt: new Date(),
+      })
+      .where(eq(movies.id, movie.id));
+
+    return { ...movie, lastOpenDate: settlementKey };
+  }
 }
 
 /**
@@ -154,17 +167,29 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
 
     if (newPrice < 1) newPrice = 1;
 
-    // Step 3: Update with combined price (trading + events)
-    await getDb()
-      .update(movies)
-      .set({
-        currentPrice: String(newPrice.toFixed(2)),
-        basePrice: String(prevPrice.toFixed(2)),
-        dailyNetVolume: 0,
-        lastOpenDate: settlementKey,
-        updatedAt: new Date(),
-      })
-      .where(eq(movies.id, movie.id));
+    // Step 3: Only update price/basePrice if something actually changed
+    const priceChanged = Math.abs(newPrice - prevPrice) > 0.001;
+    if (priceChanged) {
+      await getDb()
+        .update(movies)
+        .set({
+          currentPrice: String(newPrice.toFixed(2)),
+          basePrice: String(prevPrice.toFixed(2)),
+          dailyNetVolume: 0,
+          lastOpenDate: settlementKey,
+          updatedAt: new Date(),
+        })
+        .where(eq(movies.id, movie.id));
+    } else {
+      // No price movement: only update lastOpenDate to prevent re-processing
+      await getDb()
+        .update(movies)
+        .set({
+          lastOpenDate: settlementKey,
+          updatedAt: new Date(),
+        })
+        .where(eq(movies.id, movie.id));
+    }
   }
 }
 
