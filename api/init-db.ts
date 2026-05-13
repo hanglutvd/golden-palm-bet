@@ -117,6 +117,21 @@ export function initDatabase() {
   // Migrate: add username_changed_at to users table
   try { db.run(`ALTER TABLE users ADD COLUMN username_changed_at INTEGER`); } catch {}
 
+  // Migrate: add rating column to movies table (for word-of-mouth price impacts)
+  try { db.run(`ALTER TABLE movies ADD COLUMN rating INTEGER NOT NULL DEFAULT 5`); } catch {}
+
+  // Rating events table: admin-set word-of-mouth price impacts
+  db.run(`
+    CREATE TABLE IF NOT EXISTS rating_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      movie_id INTEGER NOT NULL,
+      impact_percent INTEGER NOT NULL,
+      remaining_cycles INTEGER NOT NULL,
+      total_cycles INTEGER NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+
   // Site config table
   db.run(`
     CREATE TABLE IF NOT EXISTS site_config (
