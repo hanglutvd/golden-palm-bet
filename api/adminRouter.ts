@@ -124,6 +124,8 @@ export const adminRouter = createRouter({
             where: eq(holdings.movieId, movieId),
           });
 
+          // Simple flat dividend: same reward regardless of price
+          // Your choice of film is your strategy — winning films always pay well
           for (const h of movieHolders) {
             const dividend = w.dividend * h.quantity;
             const user = await db.query.users.findFirst({

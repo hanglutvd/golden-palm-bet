@@ -4,6 +4,14 @@
  * Settlement: 12:00 and 18:00
  */
 
+// Dynamic price sensitivity: higher at low prices, lower at high prices
+// This prevents a few popular movies from skyrocketing to extreme prices
+export function getPriceSensitivity(currentPrice: number): number {
+  if (currentPrice >= 300) return 0.001; // 300+: 0.1% per net share
+  if (currentPrice >= 150) return 0.002; // 150-300: 0.2%
+  return 0.005; // 100-150: 0.5% (original)
+}
+
 export const AM_START = 9;
 export const AM_END = 12;
 export const PM_START = 15;

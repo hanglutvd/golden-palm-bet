@@ -1,7 +1,7 @@
 import { getDb } from "./connection.js";
 import { movies } from "../../db/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
-import { getBeijingDateStr, getBeijingHour, isPreLaunch } from "../../contracts/market.js";
+import { getBeijingDateStr, getBeijingHour, isPreLaunch, getPriceSensitivity } from "../../contracts/market.js";
 
 export async function findAllMovies() {
   return getDb().query.movies.findMany({
@@ -41,7 +41,8 @@ export async function ensureMovieMarketOpen(movie: typeof movies.$inferSelect) {
   const netVolume = Number(movie.dailyNetVolume);
 
   if (netVolume !== 0) {
-    let newPrice = prevPrice * (1 + netVolume * 0.005);
+    const sensitivity = getPriceSensitivity(prevPrice);
+    let newPrice = prevPrice * (1 + netVolume * sensitivity);
     if (newPrice < 1) newPrice = 1;
 
     await getDb()
@@ -98,7 +99,8 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
 
     if (netVolume !== 0) {
       // Has trades: update price and basePrice
-      let newPrice = prevPrice * (1 + netVolume * 0.005);
+      const sensitivity = getPriceSensitivity(prevPrice);
+      let newPrice = prevPrice * (1 + netVolume * sensitivity);
       if (newPrice < 1) newPrice = 1;
 
       await getDb()
