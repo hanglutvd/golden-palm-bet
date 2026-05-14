@@ -31,6 +31,20 @@ export const movies = sqliteTable("movies", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
+// Price history: records price snapshot after each settlement
+// Used for trend charts and historical price analysis
+export const priceHistory = sqliteTable("price_history", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  movieId: integer("movie_id").notNull(),
+  price: text("price").notNull(),
+  basePrice: text("base_price").notNull(),
+  // Settlement identifier: "2026-05-13-am-09:30"
+  settlementKey: text("settlement_key").notNull(),
+  // Net volume that caused this price change
+  netVolume: integer("net_volume").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+});
+
 // Rating events: admin-set word-of-mouth impacts that directly move prices
 // Example: a film bombs at premiere → create -30% event for 3 cycles
 // Each settlement applies a portion of the impact (linear decay over cycles)

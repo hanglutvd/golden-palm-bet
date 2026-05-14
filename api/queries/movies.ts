@@ -1,5 +1,5 @@
 import { getDb } from "./connection.js";
-import { movies, ratingEvents } from "../../db/schema.js";
+import { movies, ratingEvents, priceHistory } from "../../db/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { getBeijingDateStr, getBeijingHour, isPreLaunch, getPriceSensitivity } from "../../contracts/market.js";
 
@@ -13,6 +13,15 @@ export async function findMovieById(id: number) {
   return getDb().query.movies.findFirst({
     where: eq(movies.id, id),
   });
+}
+
+export async function getPriceHistory(movieId: number, limit: number = 30) {
+  return getDb()
+    .select()
+    .from(priceHistory)
+    .where(eq(priceHistory.movieId, movieId))
+    .orderBy(desc(priceHistory.createdAt))
+    .limit(limit);
 }
 
 function getSettlementKey(today: string, session: string) {
@@ -183,6 +192,15 @@ export async function openMarketForAll(session?: "am" | "pm", force?: boolean) {
           updatedAt: new Date(),
         })
         .where(eq(movies.id, movie.id));
+      
+      // Record price history snapshot
+      await getDb().insert(priceHistory).values({
+        movieId: movie.id,
+        price: String(newPrice.toFixed(2)),
+        basePrice: String(prevPrice.toFixed(2)),
+        settlementKey,
+        netVolume,
+      });
     } else {
       console.log(`[openMarketForAll] ${movie.name}: NO CHANGE (prev=${prevPrice}, new=${newPrice.toFixed(2)}), base=${movie.basePrice}, netVolume=${netVolume}`);
       // No price movement: only update lastOpenDate to prevent re-processing

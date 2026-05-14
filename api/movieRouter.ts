@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware.js";
-import { findAllMovies, findMovieById, seedMovies, openMarketForAll, ensureMovieMarketOpen } from "./queries/movies.js";
+import { findAllMovies, findMovieById, seedMovies, openMarketForAll, ensureMovieMarketOpen, getPriceHistory } from "./queries/movies.js";
 import { findTransactionsByMovie } from "./queries/transactions.js";
 
 
@@ -19,6 +19,7 @@ export const movieRouter = createRouter({
       changePercent: Number((((Number(m.currentPrice) - Number(m.basePrice)) / Number(m.basePrice)) * 100).toFixed(2)),
       trend: Number(m.currentPrice) > Number(m.basePrice) + 0.01 ? "up" as const : Number(m.currentPrice) < Number(m.basePrice) - 0.01 ? "down" as const : "flat" as const,
       premiereDate: m.premiereDate || undefined,
+      rating: Number(m.rating),
     }));
   }),
 
@@ -39,18 +40,21 @@ export const movieRouter = createRouter({
         changePercent: Number((((Number(opened.currentPrice) - Number(opened.basePrice)) / Number(opened.basePrice)) * 100).toFixed(2)),
         trend: Number(opened.currentPrice) > Number(opened.basePrice) + 0.01 ? "up" as const : Number(opened.currentPrice) < Number(opened.basePrice) - 0.01 ? "down" as const : "flat" as const,
         premiereDate: opened.premiereDate || undefined,
+        rating: Number(opened.rating),
       };
     }),
 
   history: publicQuery
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      const txs = await findTransactionsByMovie(input.id, 30);
-      return txs.map((t) => ({
-        type: t.type,
-        price: Number(t.price),
-        quantity: Number(t.quantity),
-        date: t.createdAt,
+      // Return price history snapshots (settlement records) for accurate trend charts
+      const snapshots = await getPriceHistory(input.id, 50);
+      return snapshots.map((s) => ({
+        price: Number(s.price),
+        basePrice: Number(s.basePrice),
+        netVolume: Number(s.netVolume),
+        settlementKey: s.settlementKey,
+        date: s.createdAt,
       }));
     }),
 

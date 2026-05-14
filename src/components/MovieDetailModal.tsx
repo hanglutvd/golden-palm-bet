@@ -71,31 +71,43 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
 
   const chartData = useMemo(() => {
     if (!history || history.length === 0) {
+      // No history yet: show flat line at current price
       const data = [];
       for (let i = 14; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         data.push({
           day: `${d.getMonth() + 1}/${d.getDate()}`,
-          price: 100,
+          price: movie?.price || 100,
         });
       }
       return data;
     }
+    
+    // Use price history snapshots (settlement records) for accurate trend
     const data = [];
-    let currentPrice = 100;
-    const sorted = [...history].reverse();
-    for (let i = 14; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const txsBefore = sorted.filter((t) => new Date(t.date) <= d);
-      if (txsBefore.length > 0) {
-        currentPrice = txsBefore[txsBefore.length - 1].price;
-      }
-      data.push({ day: `${d.getMonth() + 1}/${d.getDate()}`, price: currentPrice });
+    const sorted = [...history].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    // Show up to 15 data points from settlement history
+    const displayPoints = sorted.slice(-15);
+    for (const point of displayPoints) {
+      const d = new Date(point.date);
+      data.push({
+        day: `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`,
+        price: point.price,
+      });
     }
+    
+    // If fewer than 15 points, pad with current price at the beginning
+    while (data.length < 15) {
+      data.unshift({
+        day: '-',
+        price: movie?.price || 100,
+      });
+    }
+    
     return data;
-  }, [history]);
+  }, [history, movie]);
 
   // Conditional return MUST be after all hooks
   if (!open || !movie) return null;

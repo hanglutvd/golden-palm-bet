@@ -12,6 +12,20 @@ export function initDatabase() {
   // Migrate: add rating column to movies table
   try { db.run(`ALTER TABLE movies ADD COLUMN rating INTEGER NOT NULL DEFAULT 5`); } catch {}
 
+  // Price history table: records price snapshot after each settlement
+  db.run(`
+    CREATE TABLE IF NOT EXISTS price_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      movie_id INTEGER NOT NULL,
+      price TEXT NOT NULL,
+      base_price TEXT NOT NULL,
+      settlement_key TEXT NOT NULL,
+      net_volume INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_price_history_movie ON price_history(movie_id)`);
+
   // Rating events table
   db.run(`
     CREATE TABLE IF NOT EXISTS rating_events (
