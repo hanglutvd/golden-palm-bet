@@ -4,6 +4,9 @@ import { assertTradingHours, getCurrentSession, getBeijingDateStr, isPreLaunch }
 import { TRPCError } from "@trpc/server";
 import { findMovieById, findAllMovies, incrementDailyNetVolume } from "./queries/movies.js";
 import { findHolding, upsertHolding, findHoldingsByUser } from "./queries/holdings.js";
+
+// Maximum total holdings across all movies per user
+const MAX_TOTAL_HOLDINGS = 100;
 import { createTransaction, findTransactionsByUser } from "./queries/transactions.js";
 import { findUserById } from "./queries/users.js";
 import { getDb } from "./queries/connection.js";
@@ -11,11 +14,13 @@ import { users, transactions, registerIps } from "../db/schema.js";
 import { eq, and, desc, sql } from "drizzle-orm";
 
 // Anti-cheat: detect rapid same-IP trading across multiple accounts
-async function checkMultiAccountTrading(userId: number, movieId: number, req: Request) {
+async function checkMultiAccountTrading(userId: number, movieId: number, headers: Headers | undefined) {
+  if (!headers) return { ok: true };
+  
   // Extract IP from request headers (Railway/nginx forwards the real IP)
-  const ip = req.headers.get("x-forwarded-for") ||
-    req.headers.get("x-real-ip") ||
-    req.headers.get("cf-connecting-ip") ||
+  const ip = headers.get("x-forwarded-for") ||
+    headers.get("x-real-ip") ||
+    headers.get("cf-connecting-ip") ||
     "unknown";
 
   // Find all userIds registered from the same IP
@@ -130,7 +135,7 @@ export const tradingRouter = createRouter({
       const session = await checkSessionTradeLimit(user.id, input.movieId, "buy");
 
       // Anti-cheat: detect multi-account trading from same IP
-      const cheatCheck = await checkMultiAccountTrading(user.id, input.movieId, ctx.req.raw);
+      const cheatCheck = await checkMultiAccountTrading(user.id, input.movieId, ctx.req.headers);
 
       const price = Number(movie.currentPrice);
       const totalCost = price * input.quantity;
@@ -141,11 +146,18 @@ export const tradingRouter = createRouter({
         throw new Error(`余额不足，需要 ${totalCost.toFixed(2)}`);
       }
 
-      // Check holding limit
+      // Check holding limit (per movie)
       const existingHolding = await findHolding(user.id, input.movieId);
       const currentQty = existingHolding ? Number(existingHolding.quantity) : 0;
       if (currentQty + input.quantity > MAX_HOLDING_PER_MOVIE) {
-        throw new Error(`持股上限为 ${MAX_HOLDING_PER_MOVIE} 股，当前持有 ${currentQty} 股，最多可再买 ${MAX_HOLDING_PER_MOVIE - currentQty} 股`);
+        throw new Error(`每部电影持股上限为 ${MAX_HOLDING_PER_MOVIE} 股，当前持有 ${currentQty} 股，最多可再买 ${MAX_HOLDING_PER_MOVIE - currentQty} 股`);
+      }
+
+      // Check total holdings limit (across all movies)
+      const allHoldings = await findHoldingsByUser(user.id);
+      const totalHoldings = allHoldings.reduce((sum, h) => sum + Number(h.quantity), 0);
+      if (totalHoldings + input.quantity > MAX_TOTAL_HOLDINGS) {
+        throw new Error(`总持股上限为 ${MAX_TOTAL_HOLDINGS} 股，当前持有 ${totalHoldings} 股，最多可再买 ${MAX_TOTAL_HOLDINGS - totalHoldings} 股`);
       }
 
       // Atomic balance update: prevents race conditions under concurrent buys
