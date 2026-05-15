@@ -7,6 +7,10 @@ import { createRouter, publicQuery } from "./middleware.js";
 import { findUserByEmailOrUsername, findUserById, findUserByEmail, findUserByResetToken, findUserByUsername, createUser, setResetToken, clearResetToken, updatePassword, updateUsername, countUsers } from "./queries/users.js";
 import { sendPasswordResetEmail } from "./lib/email.js";
 import { env } from "./lib/env.js";
+import { getDb } from "./queries/connection.js";
+import { registerIps, sessionLogins } from "../db/schema.js";
+import { eq, sql, and } from "drizzle-orm";
+import { getBeijingDateStr, getBeijingHour } from "../contracts/market.js";
 
 const JWT_SECRET = env.appSecret;
 const SALT_ROUNDS = 10;
@@ -98,6 +102,17 @@ export const authRouter = createRouter({
         throw new Error("请求过于频繁，请稍后再试");
       }
 
+      // IP registration limit: max 2 accounts per IP
+      const ipCount = await getDb()
+        .select({ count: sql<number>`count(*)` })
+        .from(registerIps)
+        .where(eq(registerIps.ip, ip));
+      const existingAccounts = ipCount[0]?.count || 0;
+      const MAX_ACCOUNTS_PER_IP = 2;
+      if (existingAccounts >= MAX_ACCOUNTS_PER_IP) {
+        throw new Error(`该IP已注册 ${existingAccounts} 个账号，每个IP最多 ${MAX_ACCOUNTS_PER_IP} 个。如需更多账号请联系管理员。`);
+      }
+
       const existing = await findUserByEmailOrUsername(input.email, input.username);
       if (existing) {
         // Security: do not reveal whether email or username is taken
@@ -121,6 +136,12 @@ export const authRouter = createRouter({
       if (!user) {
         throw new Error("注册失败，请重试");
       }
+
+      // Record registration IP
+      await getDb().insert(registerIps).values({
+        ip,
+        userId: user.id,
+      });
 
       setAuthCookie(ctx.resHeaders, user.id);
 
@@ -156,6 +177,50 @@ export const authRouter = createRouter({
       const valid = await bcrypt.compare(input.password, user.passwordHash);
       if (!valid) {
         throw new Error("邮箱/用户名或密码错误");
+      }
+
+      // Check if this IP has exceeded account limit
+      const loginIp = getClientIP(ctx.req);
+      const ipCount = await getDb()
+        .select({ count: sql<number>`count(*)` })
+        .from(registerIps)
+        .where(eq(registerIps.ip, loginIp));
+      const accountsFromIp = ipCount[0]?.count || 0;
+      
+      if (accountsFromIp > 2) {
+        // Over-limit IPs: only 1 login per trading session (first-come-first-served)
+        const today = getBeijingDateStr();
+        const session = getBeijingHour() < 15 ? "am" : "pm";
+        const sessionKey = `${today}-${session}`;
+        
+        // Check if another account from this IP already logged in this session
+        const existingLogin = await getDb()
+          .select()
+          .from(sessionLogins)
+          .where(
+            and(
+              eq(sessionLogins.ip, loginIp),
+              eq(sessionLogins.sessionKey, sessionKey),
+            ),
+          )
+          .limit(1);
+        
+        if (existingLogin.length > 0 && existingLogin[0].userId !== user.id) {
+          throw new Error(
+            `该IP已注册多个账号，超过限制。` +
+            `本交易时段（${session === "am" ? "09:00-12:00" : "15:00-18:00"}）` +
+            `已有其他账号登录。每个时段只能登录1个账号。`
+          );
+        }
+        
+        // First login this session: record it
+        if (existingLogin.length === 0) {
+          await getDb().insert(sessionLogins).values({
+            ip: loginIp,
+            userId: user.id,
+            sessionKey,
+          });
+        }
       }
 
       setAuthCookie(ctx.resHeaders, user.id);

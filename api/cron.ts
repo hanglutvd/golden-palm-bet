@@ -1,5 +1,7 @@
 import { getBeijingTime, getBeijingDateStr, isPreLaunch } from "../contracts/market.js";
 import { openMarketForAll } from "./queries/movies.js";
+import { getDb } from "./queries/connection.js";
+import { sessionLogins } from "../db/schema.js";
 
 const SETTLEMENT_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -51,6 +53,22 @@ async function runSettlement() {
 
     const session = hour < 15 ? "am" : "pm";
     const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+
+    // Clear session logins at the start of each new session (09:00 and 15:00)
+    // This resets the "1 login per session" restriction for over-limit IPs
+    if ((hour === 9 && minute < 15) || (hour === 15 && minute < 15)) {
+      const db = getDb();
+      db.delete(sessionLogins).run();
+      console.log(`[cron] New session started, cleared session login records`);
+    }
+
+    // Cleanup: remove session login records older than 48 hours (daily at 03:00)
+    if (hour === 3 && minute < 15) {
+      const db = getDb();
+      const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).getTime();
+      db.run(`DELETE FROM session_logins WHERE created_at < ${twoDaysAgo}`);
+      console.log(`[cron] Cleaned up old session login records`);
+    }
 
     console.log(`[cron] Settlement at ${timeStr} (session=${session})...`);
     await openMarketForAll(session);

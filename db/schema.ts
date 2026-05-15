@@ -31,6 +31,25 @@ export const movies = sqliteTable("movies", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
+// Session logins: tracks which IP has logged in during current trading session
+// Cleared at the start of each new session (09:00 and 15:00)
+export const sessionLogins = sqliteTable("session_logins", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  ip: text("ip").notNull(),
+  userId: integer("user_id").notNull(),
+  // Session key: "2026-05-13-am" or "2026-05-13-pm"
+  sessionKey: text("session_key").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+});
+
+// Register IPs: tracks registration sources to prevent multi-account abuse
+export const registerIps = sqliteTable("register_ips", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  ip: text("ip").notNull(),
+  userId: integer("user_id").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+});
+
 // Price history: records price snapshot after each settlement
 // Used for trend charts and historical price analysis
 export const priceHistory = sqliteTable("price_history", {

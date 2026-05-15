@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Mail, User, Lock, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
+import { X, Mail, User, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 interface AuthModalProps {
@@ -135,6 +135,16 @@ export function AuthModal({ open, onClose, onForgotPassword }: AuthModalProps) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate className="px-6 py-5 space-y-4">
+          {/* IP limit notice for login mode */}
+          {mode === "login" && (
+            <div className="flex items-start gap-2 rounded-lg bg-app-gold/5 border border-app-gold/20 px-3 py-2.5">
+              <Info className="h-4 w-4 text-app-gold flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-app-gold leading-relaxed">
+                每个IP最多注册2个账号。超过2个账号的IP，每个交易时段（09:00-12:00 / 15:00-18:00）只能登录1个账号。
+              </p>
+            </div>
+          )}
+
           {/* Error / Success messages */}
           {error && (
             <div className="flex items-center gap-2 rounded-lg bg-app-red/10 border border-app-red/20 px-3 py-2.5">

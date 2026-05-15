@@ -12,6 +12,29 @@ export function initDatabase() {
   // Migrate: add rating column to movies table
   try { db.run(`ALTER TABLE movies ADD COLUMN rating INTEGER NOT NULL DEFAULT 5`); } catch {}
 
+  // Session logins table: tracks which IP has logged in during current trading session
+  db.run(`
+    CREATE TABLE IF NOT EXISTS session_logins (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ip TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
+      session_key TEXT NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_session_logins_ip_session ON session_logins(ip, session_key)`);
+
+  // Register IPs table: tracks registration sources to prevent multi-account abuse
+  db.run(`
+    CREATE TABLE IF NOT EXISTS register_ips (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ip TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_register_ips_ip ON register_ips(ip)`);
+
   // Price history table: records price snapshot after each settlement
   db.run(`
     CREATE TABLE IF NOT EXISTS price_history (
