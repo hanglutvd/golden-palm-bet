@@ -7,8 +7,53 @@ import { findHolding, upsertHolding, findHoldingsByUser } from "./queries/holdin
 import { createTransaction, findTransactionsByUser } from "./queries/transactions.js";
 import { findUserById } from "./queries/users.js";
 import { getDb } from "./queries/connection.js";
-import { users, transactions } from "../db/schema.js";
+import { users, transactions, registerIps } from "../db/schema.js";
 import { eq, and, desc, sql } from "drizzle-orm";
+
+// Anti-cheat: detect rapid same-IP trading across multiple accounts
+async function checkMultiAccountTrading(userId: number, movieId: number, req: Request) {
+  // Extract IP from request headers (Railway/nginx forwards the real IP)
+  const ip = req.headers.get("x-forwarded-for") ||
+    req.headers.get("x-real-ip") ||
+    req.headers.get("cf-connecting-ip") ||
+    "unknown";
+
+  // Find all userIds registered from the same IP
+  const sameIpUsers = await getDb()
+    .select({ userId: registerIps.userId })
+    .from(registerIps)
+    .where(eq(registerIps.ip, ip));
+
+  const userIds = sameIpUsers.map((r) => r.userId);
+  if (userIds.length < 2) return { ok: true }; // Only 1 account from this IP, no issue
+
+  // Check if any other account from same IP traded the same movie in the last 2 minutes
+  const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+  const recentTrades = await getDb()
+    .select()
+    .from(transactions)
+    .where(
+      and(
+        sql`${transactions.userId} IN (${userIds.join(",")})`,
+        eq(transactions.movieId, movieId),
+        sql`${transactions.createdAt} > ${twoMinutesAgo.getTime()}`,
+      ),
+    )
+    .orderBy(desc(transactions.createdAt))
+    .limit(5);
+
+  // Exclude current user's own trades
+  const otherTrades = recentTrades.filter((t) => t.userId !== userId);
+  if (otherTrades.length >= 1) {
+    console.warn(`[ANTI-CHEAT] IP ${ip}: ${userIds.length} accounts, ${otherTrades.length} other accounts traded movie ${movieId} in last 2 min`);
+    return {
+      ok: true, // Allow trade but log for review
+      warning: "检测到同IP多账号交易模式，已记录供管理员审查",
+    };
+  }
+
+  return { ok: true };
+}
 
 const MAX_HOLDING_PER_MOVIE = 20;
 
@@ -24,8 +69,6 @@ async function checkSessionTradeLimit(
   const session = getCurrentSession();
 
   // Pre-launch: no trade limit (unlimited buys/sells)
-  // Use a special session marker so pre-launch trades don't block
-  // formal session trades after the market officially opens.
   if (isPreLaunch()) {
     return PRELAUNCH_SESSION;
   }
@@ -36,7 +79,8 @@ async function checkSessionTradeLimit(
 
   const today = getBeijingDateStr();
 
-  // Check if user already did this trade type on this movie in current session
+  // Check if user already traded this movie in current session (ANY trade type)
+  // Pre-launch trades use "prelaunch" session, so they won't block
   const existing = await getDb()
     .select()
     .from(transactions)
@@ -44,8 +88,7 @@ async function checkSessionTradeLimit(
       and(
         eq(transactions.userId, userId),
         eq(transactions.movieId, movieId),
-        eq(transactions.session, session),
-        eq(transactions.type, tradeType)
+        eq(transactions.session, session)
       )
     );
 
@@ -59,9 +102,8 @@ async function checkSessionTradeLimit(
 
   if (todayTrades.length > 0) {
     const sessionLabel = session === "am" ? "上午" : "下午";
-    const typeLabel = tradeType === "buy" ? "买入" : "卖出";
     throw new Error(
-      `本${sessionLabel}时段已${typeLabel}过该电影，不可重复${typeLabel}（${session === "am" ? "15:00" : "明日09:00"}后可再次操作）`
+      `本${sessionLabel}时段已交易过该电影，不可重复交易（${session === "am" ? "15:00" : "明日09:00"}后可再次操作）`
     );
   }
 
@@ -86,6 +128,9 @@ export const tradingRouter = createRouter({
 
       // Check session trade limit (buy: can buy once per movie per session)
       const session = await checkSessionTradeLimit(user.id, input.movieId, "buy");
+
+      // Anti-cheat: detect multi-account trading from same IP
+      const cheatCheck = await checkMultiAccountTrading(user.id, input.movieId, ctx.req.raw);
 
       const price = Number(movie.currentPrice);
       const totalCost = price * input.quantity;
@@ -142,6 +187,7 @@ export const tradingRouter = createRouter({
         price,
         totalCost,
         newBalance,
+        warning: cheatCheck.warning,
       };
     }),
 
