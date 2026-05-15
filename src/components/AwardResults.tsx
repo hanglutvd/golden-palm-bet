@@ -3,14 +3,14 @@ import { Trophy, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const awardsList = [
-  { name: '金棕榈奖', dividend: 500.00 },
-  { name: '评审团大奖', dividend: 200.00 },
-  { name: '最佳导演', dividend: 150.00 },
-  { name: '最佳女演员', dividend: 100.00 },
-  { name: '最佳男演员', dividend: 100.00 },
-  { name: '最佳编剧', dividend: 100.00 },
-  { name: '评审团奖', dividend: 100.00 },
-  { name: '特别奖（若有）', dividend: 50.00 },
+  { name: '金棕榈奖', dividend: 5000.00 },
+  { name: '评审团大奖', dividend: 3000.00 },
+  { name: '最佳导演', dividend: 2500.00 },
+  { name: '最佳女演员', dividend: 2000.00 },
+  { name: '最佳男演员', dividend: 2000.00 },
+  { name: '最佳编剧', dividend: 2000.00 },
+  { name: '评审团奖', dividend: 2000.00 },
+  { name: '特别奖（若有）', dividend: 1500.00 },
 ];
 
 export function AwardResults() {
