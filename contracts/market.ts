@@ -155,6 +155,32 @@ export function formatTimeRemaining(target: Date): string {
 }
 
 // ============================================
+// MARKET CLOSE (end of trading)
+// ============================================
+const CLOSE_DATE = "2026-05-23"; // 闭市日期
+const CLOSE_HOUR = 12; // 闭市时间：中午12点
+
+/**
+ * Check if the market has permanently closed.
+ * After closing, no trading is allowed.
+ */
+export function isMarketClosed(): boolean {
+  const today = getBeijingDateStr();
+  const hour = getBeijingHour();
+  // Close at 12:00 on May 23
+  if (today > CLOSE_DATE) return true;
+  if (today === CLOSE_DATE && hour >= CLOSE_HOUR) return true;
+  return false;
+}
+
+/**
+ * Get the market close date as a formatted string.
+ */
+export function getCloseDateDisplay(): string {
+  return "5月23日（周六）中午12:00";
+}
+
+// ============================================
 // PRE-LAUNCH PERIOD (before official market open)
 // ============================================
 const LAUNCH_DATE = "2026-05-13"; // 首次开盘日期

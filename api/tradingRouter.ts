@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createRouter, publicQuery } from "./middleware.js";
-import { assertTradingHours, getCurrentSession, getBeijingDateStr, isPreLaunch } from "../contracts/market.js";
+import { assertTradingHours, getCurrentSession, getBeijingDateStr, isPreLaunch, isMarketClosed } from "../contracts/market.js";
 import { TRPCError } from "@trpc/server";
 import { findMovieById, findAllMovies, incrementDailyNetVolume } from "./queries/movies.js";
 import { findHolding, upsertHolding, findHoldingsByUser } from "./queries/holdings.js";
@@ -123,6 +123,10 @@ export const tradingRouter = createRouter({
     }))
     .mutation(async ({ input, ctx }) => {
       assertTradingHours();
+      // Check if market has permanently closed
+      if (isMarketClosed()) {
+        throw new Error(`股市已永久闭市。感谢各位玩家的参与！分红结果将在颁奖后统一结算。`);
+      }
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
       const user = await findUserById(ctx.user.id);
@@ -210,6 +214,10 @@ export const tradingRouter = createRouter({
     }))
     .mutation(async ({ input, ctx }) => {
       assertTradingHours();
+      // Check if market has permanently closed
+      if (isMarketClosed()) {
+        throw new Error(`股市已永久闭市。感谢各位玩家的参与！分红结果将在颁奖后统一结算。`);
+      }
       if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
 
       const user = await findUserById(ctx.user.id);

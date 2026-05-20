@@ -148,9 +148,19 @@ export function RulesModal({ open, onClose }: RulesModalProps) {
                 <span className="text-sm text-foreground">每时段每部电影交易</span>
                 <span className="text-sm font-bold tabular-nums text-app-gold">限1次</span>
               </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <Coins className="h-4 w-4 text-app-gold" />
+                <span className="text-sm text-foreground">每部电影最多持股</span>
+                <span className="text-sm font-bold tabular-nums text-app-gold">20股</span>
+              </div>
+              <div className="grid grid-cols-[auto,1fr,auto] gap-3 items-center px-4 py-2.5">
+                <Coins className="h-4 w-4 text-app-red" />
+                <span className="text-sm text-foreground">所有电影总持股上限</span>
+                <span className="text-sm font-bold tabular-nums text-app-red">100股</span>
+              </div>
               <div className="px-4 py-2.5">
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  5月13日09:00首次开盘时，系统将根据预热期累积的净成交量一次性调整所有电影价格并展现涨跌幅。此后进入正常交易模式：每天09:00-12:00和15:00-18:00两个交易时段，每10分钟根据净成交量结算一次价格。每个时段每部电影只能买入**或**卖出一次，不能同时买和卖。
+                  5月13日09:00首次开盘时，系统将根据预热期累积的净成交量一次性调整所有电影价格并展现涨跌幅。此后进入正常交易模式：每天09:00-12:00和15:00-18:00两个交易时段，每10分钟根据净成交量结算一次价格。每个时段每部电影只能买入**或**卖出一次，不能同时买和卖。**股市将于5月23日（周六）中午12:00永久闭市**，届时不可再交易。
                 </p>
               </div>
             </div>

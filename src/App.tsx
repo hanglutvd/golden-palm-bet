@@ -16,6 +16,8 @@ import { PrizesModal } from './components/PrizesModal';
 import { UserPortfolioPreview } from './components/UserPortfolioPreview';
 import { AwardResults } from './components/AwardResults';
 import { DiscussPanel } from './components/DiscussPanel';
+import { MarketClosedModal } from './components/MarketClosedModal';
+import { MarketClosingSoonModal } from './components/MarketClosingSoonModal';
 import { AdminShell } from './components/AdminShell';
 import { Settings } from './pages/Settings';
 import { AuthProvider } from './hooks/useAuth';
@@ -36,6 +38,10 @@ function HomePage({ onEnterAdmin, onOpenSettings }: { onEnterAdmin: () => void; 
 
   return (
     <div className="min-h-screen bg-app-bg flex flex-col">
+      {/* Market closing soon modal - shows before market closes */}
+      <MarketClosingSoonModal />
+      {/* Market closed modal - shows on page load if market is permanently closed */}
+      <MarketClosedModal />
       <Header
         onOpenRules={() => setRulesOpen(true)}
         onOpenAuth={() => setAuthOpen(true)}
