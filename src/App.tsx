@@ -61,10 +61,10 @@ function HomePage({ onEnterAdmin, onOpenSettings }: { onEnterAdmin: () => void; 
           </div>
           <div className="lg:w-[36%] flex flex-col gap-6">
             <UserPortfolioPreview onOpenFull={() => setPortfolioOpen(true)} />
-            <MarketPreview onOpenFull={() => setMarketOpen(true)} />
+            <AwardResults />
             <DiscussPanel />
             <Leaderboard onOpenFull={() => setLeaderboardOpen(true)} />
-            <AwardResults />
+            <MarketPreview onOpenFull={() => setMarketOpen(true)} />
           </div>
         </div>
       </main>
