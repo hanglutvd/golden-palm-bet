@@ -1,11 +1,10 @@
-import { X, MessageCircle, Trophy, Heart, Sparkles } from "lucide-react";
+import { X, Trophy, Heart, Sparkles } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function MarketClosedModal() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Always show on page load unless user dismissed
     const dismissed = localStorage.getItem("market-closed-dismissed");
     if (!dismissed) {
       setShow(true);
@@ -44,7 +43,6 @@ export function MarketClosedModal() {
           </div>
 
           <div className="rounded-lg bg-app-bg border border-app-border p-4 space-y-4">
-            {/* Notice 1: WeChat for top 10 */}
             <div className="flex items-start gap-3">
               <div className="w-7 h-7 rounded-full bg-app-gold/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span className="text-xs font-bold text-app-gold">1</span>
@@ -54,7 +52,6 @@ export function MarketClosedModal() {
               </p>
             </div>
 
-            {/* Notice 2: Feedback */}
             <div className="flex items-start gap-3">
               <div className="w-7 h-7 rounded-full bg-app-gold/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span className="text-xs font-bold text-app-gold">2</span>
@@ -64,7 +61,6 @@ export function MarketClosedModal() {
               </p>
             </div>
 
-            {/* Notice 3: See you next year */}
             <div className="flex items-start gap-3">
               <div className="w-7 h-7 rounded-full bg-app-gold/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span className="text-xs font-bold text-app-gold">3</span>
@@ -90,4 +86,8 @@ export function MarketClosedModal() {
           >
             我知道了
           </button>
-   
+        </div>
+      </div>
+    </div>
+  );
+}
