@@ -5,7 +5,8 @@ export function MarketClosedModal() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem("market-closed-dismissed");
+    // v2: updated content after market close
+    const dismissed = localStorage.getItem("market-closed-dismissed-v2");
     if (!dismissed) {
       setShow(true);
     }
@@ -25,7 +26,7 @@ export function MarketClosedModal() {
           <button
             onClick={() => {
               setShow(false);
-              localStorage.setItem("market-closed-dismissed", "1");
+              localStorage.setItem("market-closed-dismissed-v2", "1");
             }}
             className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-app-hover transition-colors"
           >
@@ -80,7 +81,7 @@ export function MarketClosedModal() {
           <button
             onClick={() => {
               setShow(false);
-              localStorage.setItem("market-closed-dismissed", "1");
+              localStorage.setItem("market-closed-dismissed-v2", "1");
             }}
             className="w-full py-2.5 rounded-lg bg-app-gold text-app-bg font-bold text-sm hover:bg-app-gold/90 transition-colors"
           >
