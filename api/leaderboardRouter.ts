@@ -37,6 +37,7 @@ export const leaderboardRouter = createRouter({
         balance,
         marketValue,
         totalAssets,
+        wechatId: u.wechatId,
       };
     });
     
@@ -49,6 +50,7 @@ export const leaderboardRouter = createRouter({
       balance: u.balance,
       marketValue: u.marketValue,
       totalAssets: u.totalAssets,
+      wechatId: idx < 10 ? u.wechatId : undefined, // Only expose wechatId for top 10
       medal: idx === 0 ? "gold" as const : idx === 1 ? "silver" as const : idx === 2 ? "bronze" as const : undefined,
     }));
   }),

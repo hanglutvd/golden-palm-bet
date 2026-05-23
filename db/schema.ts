@@ -10,6 +10,7 @@ export const users = sqliteTable("users", {
   resetToken: text("reset_token"),
   resetTokenExpiry: integer("reset_token_expiry", { mode: "timestamp" }),
   usernameChangedAt: integer("username_changed_at", { mode: "timestamp" }),
+  wechatId: text("wechat_id"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });

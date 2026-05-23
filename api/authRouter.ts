@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { TRPCError } from "@trpc/server";
 import { createRouter, publicQuery } from "./middleware.js";
-import { findUserByEmailOrUsername, findUserById, findUserByEmail, findUserByResetToken, findUserByUsername, createUser, setResetToken, clearResetToken, updatePassword, updateUsername, countUsers } from "./queries/users.js";
+import { findUserByEmailOrUsername, findUserById, findUserByEmail, findUserByResetToken, findUserByUsername, createUser, setResetToken, clearResetToken, updatePassword, updateUsername, updateWechatId, countUsers } from "./queries/users.js";
 import { sendPasswordResetEmail } from "./lib/email.js";
 import { env } from "./lib/env.js";
 import { getDb } from "./queries/connection.js";
@@ -353,6 +353,20 @@ export const authRouter = createRouter({
 
       await updateUsername(ctx.user.id, input.username);
       return { message: "昵称修改成功", nextChangeInDays: 30 };
+    }),
+
+  // Update WeChat ID (for top 10 winners contact)
+  updateWechatId: publicQuery
+    .input(
+      z.object({
+        wechatId: z.string().min(1, "请输入微信号").max(50, "微信号过长"),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      if (!ctx.user) throw new TRPCError({ code: "UNAUTHORIZED", message: "请先登录" });
+
+      await updateWechatId(ctx.user.id, input.wechatId);
+      return { message: "微信号提交成功", wechatId: input.wechatId };
     }),
 
   // Change password

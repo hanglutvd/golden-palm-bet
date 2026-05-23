@@ -89,3 +89,10 @@ export async function updateUsername(userId: number, username: string) {
     .set({ username, usernameChangedAt: new Date(), updatedAt: new Date() })
     .where(eq(users.id, userId));
 }
+
+export async function updateWechatId(userId: number, wechatId: string) {
+  await getDb()
+    .update(users)
+    .set({ wechatId, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
