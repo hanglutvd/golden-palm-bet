@@ -3,14 +3,14 @@ import { Trophy, CheckCircle, AlertTriangle, Plus, X } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 
 const AWARD_CONFIG = [
-  { name: '金棕榈奖', dividend: 500 },
-  { name: '评审团大奖', dividend: 200 },
-  { name: '最佳导演', dividend: 150 },
-  { name: '最佳男演员', dividend: 100 },
-  { name: '最佳女演员', dividend: 100 },
-  { name: '最佳编剧', dividend: 100 },
-  { name: '评审团奖', dividend: 100 },
-  { name: '特别奖（若有）', dividend: 50 },
+  { name: '金棕榈奖', dividend: 5000 },
+  { name: '评审团大奖', dividend: 3000 },
+  { name: '最佳导演', dividend: 2500 },
+  { name: '最佳男演员', dividend: 2000 },
+  { name: '最佳女演员', dividend: 2000 },
+  { name: '最佳编剧', dividend: 2000 },
+  { name: '评审团奖', dividend: 2000 },
+  { name: '特别奖（若有）', dividend: 1500 },
 ];
 
 export function AdminAwards() {
