@@ -1,17 +1,44 @@
-import { Trophy, Crown } from 'lucide-react';
+import { Trophy, Crown, Film } from 'lucide-react';
+import { trpc } from '@/providers/trpc';
 
-const awardsList = [
-  { name: '金棕榈奖', dividend: 5000.00, icon: Crown },
-  { name: '评审团大奖', dividend: 3000.00 },
-  { name: '最佳导演', dividend: 2500.00 },
-  { name: '最佳女演员', dividend: 2000.00 },
-  { name: '最佳男演员', dividend: 2000.00 },
-  { name: '最佳编剧', dividend: 2000.00 },
-  { name: '评审团奖', dividend: 2000.00 },
-  { name: '特别奖（若有）', dividend: 1500.00 },
+const AWARD_ORDER = [
+  '金棕榈奖',
+  '评审团大奖',
+  '最佳导演',
+  '最佳男演员',
+  '最佳女演员',
+  '最佳编剧',
+  '评审团奖',
+  '特别奖（若有）',
 ];
 
+const DEFAULT_DIVIDENDS: Record<string, number> = {
+  '金棕榈奖': 5000,
+  '评审团大奖': 3000,
+  '最佳导演': 2500,
+  '最佳男演员': 2000,
+  '最佳女演员': 2000,
+  '最佳编剧': 2000,
+  '评审团奖': 2000,
+  '特别奖（若有）': 1500,
+};
+
 export function AwardResults() {
+  const { data: awardList } = trpc.admin.listAwardResults.useQuery();
+
+  // Group award results by award name
+  const grouped: Record<string, { movieNames: string[]; dividend: number }> = {};
+  if (awardList) {
+    for (const r of awardList) {
+      if (!grouped[r.awardName]) {
+        grouped[r.awardName] = { movieNames: [], dividend: r.dividend };
+      }
+      grouped[r.awardName].movieNames.push(r.movieName);
+    }
+  }
+
+  const hasResults = awardList && awardList.length > 0;
+
   return (
     <div className="rounded-lg bg-app-card border border-app-border overflow-hidden">
       {/* Header */}
@@ -25,33 +52,70 @@ export function AwardResults() {
 
       {/* Award List */}
       <div className="divide-y divide-app-border/60">
-        {awardsList.map((award, index) => {
-          const Icon = award.icon;
-          return (
-            <div
-              key={index}
-              className="flex items-center justify-between px-4 py-2.5 hover:bg-app-hover/50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                {Icon && <Icon className="h-3.5 w-3.5 text-app-gold" />}
-                <span className="text-sm text-foreground">{award.name}</span>
-              </div>
-              <span
-                className={`text-sm font-bold tabular-nums ${
-                  award.dividend >= 2500 ? 'text-app-gold' : 'text-foreground'
-                }`}
+        {hasResults ? (
+          // Show actual award results with winning films
+          AWARD_ORDER.map((awardName) => {
+            const result = grouped[awardName];
+            if (!result) return null;
+            const isTop = result.dividend >= 2500;
+            return (
+              <div
+                key={awardName}
+                className="flex items-center justify-between px-4 py-2.5 hover:bg-app-hover/50 transition-colors"
               >
-                {award.dividend.toFixed(2)}
-              </span>
-            </div>
-          );
-        })}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    {awardName === '金棕榈奖' && <Crown className="h-3.5 w-3.5 text-app-gold flex-shrink-0" />}
+                    <span className="text-sm text-foreground">{awardName}</span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <Film className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate">
+                      {result.movieNames.map((name) => `《${name}》`).join('、')}
+                    </span>
+                  </div>
+                </div>
+                <span
+                  className={`text-sm font-bold tabular-nums flex-shrink-0 ml-3 ${
+                    isTop ? 'text-app-gold' : 'text-foreground'
+                  }`}
+                >
+                  {result.dividend.toFixed(2)}
+                </span>
+              </div>
+            );
+          })
+        ) : (
+          // Show default award list before results are set
+          AWARD_ORDER.map((awardName) => {
+            const dividend = DEFAULT_DIVIDENDS[awardName] || 0;
+            const isTop = dividend >= 2500;
+            return (
+              <div
+                key={awardName}
+                className="flex items-center justify-between px-4 py-2.5 hover:bg-app-hover/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  {awardName === '金棕榈奖' && <Crown className="h-3.5 w-3.5 text-app-gold" />}
+                  <span className="text-sm text-foreground">{awardName}</span>
+                </div>
+                <span
+                  className={`text-sm font-bold tabular-nums ${
+                    isTop ? 'text-app-gold' : 'text-foreground'
+                  }`}
+                >
+                  {dividend.toFixed(2)}
+                </span>
+              </div>
+            );
+          })
+        )}
       </div>
 
       {/* Footer note */}
       <div className="px-4 py-2.5 border-t border-app-border bg-app-bg/40">
         <p className="text-xs text-muted-foreground text-center">
-          颁奖后根据获奖影片统一结算分红
+          {hasResults ? '获奖结果已公布，分红已发放' : '颁奖后根据获奖影片统一结算分红'}
         </p>
       </div>
     </div>

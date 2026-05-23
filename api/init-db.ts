@@ -61,6 +61,18 @@ export function initDatabase() {
     )
   `);
 
+  // Award results table: stores final award winners
+  db.run(`
+    CREATE TABLE IF NOT EXISTS award_results (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      award_name TEXT NOT NULL,
+      movie_id INTEGER NOT NULL,
+      movie_name TEXT NOT NULL,
+      dividend INTEGER NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    )
+  `);
+
   // Migrate: add wechat_id to users table (for top 10 winners contact)
   try { db.run(`ALTER TABLE users ADD COLUMN wechat_id TEXT`); } catch {}
 

@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { createRouter, adminQuery } from "./middleware.js";
+import { createRouter, publicQuery, adminQuery } from "./middleware.js";
 import { getDb } from "./queries/connection.js";
-import { movies, users, diaries, holdings, transactions, ratingEvents } from "../db/schema.js";
+import { movies, users, diaries, holdings, transactions, ratingEvents, awardResults } from "../db/schema.js";
 import { eq, desc, sql } from "drizzle-orm";
 import { openMarketForAll, findAllMovies } from "./queries/movies.js";
 import { getBeijingDateStr } from "../contracts/market.js";
@@ -188,6 +188,13 @@ export const adminRouter = createRouter({
     )
     .mutation(async ({ input }) => {
       const db = getDb();
+
+      // Prevent double-payout: refuse if awards have already been set
+      const existingAwards = await db.select({ count: sql<number>`count(*)` }).from(awardResults);
+      if (existingAwards[0].count > 0) {
+        throw new Error("开奖已完成，不可重复开奖。如需修改获奖结果，请先使用「撤销开奖」功能。");
+      }
+
       const results = [];
 
       for (const w of input.winners) {
@@ -195,12 +202,25 @@ export const adminRouter = createRouter({
         const paidUserIds = new Set<number>();
 
         for (const movieId of w.movieIds) {
+          // Get movie name for award result record
+          const movie = await db.query.movies.findFirst({
+            where: eq(movies.id, movieId),
+          });
+          const movieName = movie?.name || "未知影片";
+
+          // Save award result
+          await db.insert(awardResults).values({
+            awardName: w.awardName,
+            movieId,
+            movieName,
+            dividend: w.dividend,
+          });
+
           const movieHolders = await db.query.holdings.findMany({
             where: eq(holdings.movieId, movieId),
           });
 
           // Simple flat dividend: same reward regardless of price
-          // Your choice of film is your strategy — winning films always pay well
           for (const h of movieHolders) {
             const dividend = w.dividend * h.quantity;
             const user = await db.query.users.findFirst({
@@ -231,6 +251,58 @@ export const adminRouter = createRouter({
 
       return { success: true, results };
     }),
+
+  // Set award results ONLY (for display on homepage) — does NOT distribute dividends
+  // Use this when awards have already been settled and you just need to update the display
+  setAwardResultsOnly: adminQuery
+    .input(
+      z.object({
+        winners: z.array(
+          z.object({
+            awardName: z.string(),
+            movieIds: z.array(z.number()),
+            dividend: z.number(),
+          }),
+        ),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const db = getDb();
+
+      // Clear previous results
+      await db.delete(awardResults);
+
+      for (const w of input.winners) {
+        for (const movieId of w.movieIds) {
+          const movie = await db.query.movies.findFirst({
+            where: eq(movies.id, movieId),
+          });
+          await db.insert(awardResults).values({
+            awardName: w.awardName,
+            movieId,
+            movieName: movie?.name || "未知影片",
+            dividend: w.dividend,
+          });
+        }
+      }
+
+      return { success: true, message: "获奖结果已录入" };
+    }),
+
+  // Undo award settlement: removes award results so admin can re-settle
+  // Note: already-paid dividends are NOT recovered (users may have spent them)
+  undoAwards: adminQuery.mutation(async () => {
+    const db = getDb();
+    await db.delete(awardResults);
+    return { success: true, message: "已撤销开奖记录，可以重新开奖。注意：之前发放的分红不会从用户账户中扣除。" };
+  }),
+
+  // Public query: list award results (shown on homepage)
+  listAwardResults: publicQuery.query(async () => {
+    const db = getDb();
+    const results = await db.select().from(awardResults).orderBy(awardResults.createdAt);
+    return results;
+  }),
 
   // Diary management
   createDiary: adminQuery

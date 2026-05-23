@@ -126,6 +126,17 @@ export const comments = sqliteTable("comments", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
+// Award results: stores the final award winners after admin sets them
+// Displayed on homepage so users know which films won
+export const awardResults = sqliteTable("award_results", {
+  id: integer("id", { mode: "number" }).primaryKey({ autoIncrement: true }),
+  awardName: text("award_name").notNull(),
+  movieId: integer("movie_id").notNull(),
+  movieName: text("movie_name").notNull(),
+  dividend: integer("dividend").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+});
+
 export const siteConfig = sqliteTable("site_config", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
@@ -139,3 +150,4 @@ export type Holding = typeof holdings.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Diary = typeof diaries.$inferInsert;
 export type Comment = typeof comments.$inferSelect;
+export type AwardResult = typeof awardResults.$inferSelect;
