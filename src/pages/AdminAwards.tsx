@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trophy, CheckCircle, AlertTriangle, Plus, X, RotateCcw, Lock } from 'lucide-react';
+import { Trophy, CheckCircle, AlertTriangle, Plus, X, RotateCcw, Lock, Eye } from 'lucide-react';
 import { trpc } from '@/providers/trpc';
 
 const AWARD_CONFIG = [
@@ -15,7 +15,6 @@ const AWARD_CONFIG = [
 
 export function AdminAwards() {
   const [winners, setWinners] = useState<Record<string, number[]>>({});
-  const [confirming, setConfirming] = useState(false);
   const [undoConfirming, setUndoConfirming] = useState(false);
 
   const utils = trpc.useUtils();
@@ -26,14 +25,12 @@ export function AdminAwards() {
   const setWinnersMutation = trpc.admin.setWinners.useMutation({
     onSuccess: (data) => {
       utils.invalidate();
-      setConfirming(false);
       const totalAwards = data.results.length;
       const totalMovies = data.results.reduce((sum, r) => sum + (r.movieIds?.length || 0), 0);
       alert(`开奖完成！共 ${totalAwards} 个奖项，${totalMovies} 部获奖影片，分红已发放。`);
     },
     onError: (err) => {
       alert(err.message);
-      setConfirming(false);
     },
   });
 
@@ -48,12 +45,10 @@ export function AdminAwards() {
   const setResultsOnlyMutation = trpc.admin.setAwardResultsOnly.useMutation({
     onSuccess: (data) => {
       utils.invalidate();
-      setConfirming(false);
       alert(data.message);
     },
     onError: (err) => {
       alert(err.message);
-      setConfirming(false);
     },
   });
 
@@ -98,6 +93,7 @@ export function AdminAwards() {
       alert('请至少选择一个获奖影片');
       return;
     }
+    if (!confirm('确定开奖？系统将自动向获奖影片的持股用户发放分红。此操作不可重复执行。')) return;
     setWinnersMutation.mutate({ winners: payload });
   };
 
@@ -107,6 +103,7 @@ export function AdminAwards() {
       alert('请至少选择一个获奖影片');
       return;
     }
+    if (!confirm('确定录入？这只会更新首页的「分红结果」显示，不会重新发放分红。')) return;
     setResultsOnlyMutation.mutate({ winners: payload });
   };
 
@@ -120,14 +117,6 @@ export function AdminAwards() {
             已开奖
           </span>
         )}
-      </div>
-
-      {/* Warning */}
-      <div className="flex items-start gap-2 rounded-lg bg-app-red/5 border border-app-red/20 px-4 py-3">
-        <AlertTriangle className="h-4 w-4 text-app-red flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-app-red leading-relaxed">
-          <strong>警告：</strong>开奖后系统将自动向获奖影片的持股用户发放分红。此操作不可逆，请确认所有获奖名单准确无误后再执行。
-        </p>
       </div>
 
       {/* Current award results (if already set) */}
@@ -157,11 +146,17 @@ export function AdminAwards() {
         </div>
       )}
 
-      {/* Award selection */}
-      {(!hasAwards || confirming) && (
-        <div className="rounded-lg bg-app-card border border-app-border overflow-x-auto">
+      {/* Award selection - ALWAYS visible */}
+      <div className="rounded-lg bg-app-card border border-app-border overflow-hidden">
+        <div className="px-4 py-3 border-b border-app-border bg-app-bg/60 flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase text-muted-foreground">选择获奖影片</span>
+          {hasAwards && (
+            <span className="text-xs text-app-gold">已开奖，修改不会重复发钱</span>
+          )}
+        </div>
+        <div className="overflow-x-auto">
           <div className="min-w-[500px]">
-            <div className="grid grid-cols-[1fr,1.5fr,auto] gap-4 px-4 py-2.5 border-b border-app-border bg-app-bg/60">
+            <div className="grid grid-cols-[1fr,1.5fr,auto] gap-4 px-4 py-2.5 border-b border-app-border bg-app-bg/30">
               <span className="text-xs font-semibold uppercase text-muted-foreground">奖项</span>
               <span className="text-xs font-semibold uppercase text-muted-foreground">获奖影片（可多选）</span>
               <span className="text-xs font-semibold uppercase text-muted-foreground text-right">每股分红</span>
@@ -177,7 +172,6 @@ export function AdminAwards() {
                     </div>
 
                     <div className="space-y-1.5">
-                      {/* Selected movie tags */}
                       {selectedMovies.map((movieId, idx) => {
                         const movie = movies?.find((m) => m.id === movieId);
                         return (
@@ -195,7 +189,6 @@ export function AdminAwards() {
                         );
                       })}
 
-                      {/* Add movie selector */}
                       <div className="flex items-center gap-1.5">
                         <select
                           value=""
@@ -227,70 +220,45 @@ export function AdminAwards() {
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Submit / Undo buttons */}
+      {/* Action buttons - ALWAYS visible */}
       <div className="flex items-center justify-end gap-3">
-        {!confirming && !undoConfirming ? (
+        {!undoConfirming ? (
           <>
-            {hasAwards && (
+            {/* Primary: set results only (display only, no payout) */}
+            <button
+              onClick={handleSetResultsOnly}
+              disabled={setResultsOnlyMutation.isPending}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-app-gold text-app-bg text-sm font-bold hover:bg-app-gold/90 transition-colors disabled:opacity-50"
+            >
+              <Eye className="h-4 w-4" />
+              {setResultsOnlyMutation.isPending ? '处理中...' : '录入获奖结果'}
+            </button>
+
+            {/* Secondary: full settlement with payout (only if not yet settled) */}
+            {!hasAwards && (
               <button
-                onClick={() => setConfirming(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-md border border-app-gold text-sm text-app-gold hover:bg-app-gold/10 transition-colors"
+                onClick={handleSetWinners}
+                disabled={setWinnersMutation.isPending}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-md border border-app-red text-app-red text-sm font-medium hover:bg-app-red/10 transition-colors disabled:opacity-50"
               >
-                <Plus className="h-4 w-4" />
-                录入获奖结果
+                <CheckCircle className="h-4 w-4" />
+                {setWinnersMutation.isPending ? '处理中...' : '确认开奖（发分红）'}
               </button>
             )}
+
+            {/* Undo (only if already settled) */}
             {hasAwards && (
               <button
                 onClick={() => setUndoConfirming(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-md border border-app-border text-sm text-muted-foreground hover:text-app-red hover:border-app-red transition-colors"
               >
                 <RotateCcw className="h-4 w-4" />
-                撤销开奖
-              </button>
-            )}
-            {!hasAwards && (
-              <button
-                onClick={() => setConfirming(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-app-gold text-app-bg text-sm font-bold hover:bg-app-gold/90 transition-colors"
-              >
-                <CheckCircle className="h-4 w-4" />
-                确认开奖
+                撤销
               </button>
             )}
           </>
-        ) : confirming ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">
-              {hasAwards ? '仅更新显示，不会重复发钱' : '确定开奖？分红将自动发放'}
-            </span>
-            {!hasAwards && (
-              <button
-                onClick={handleSetWinners}
-                disabled={setWinnersMutation.isPending}
-                className="px-4 py-2 rounded-md bg-app-red text-white text-sm font-medium hover:bg-red-400 transition-colors disabled:opacity-50"
-              >
-                {setWinnersMutation.isPending ? '处理中...' : '确认开奖'}
-              </button>
-            )}
-            {hasAwards && (
-              <button
-                onClick={handleSetResultsOnly}
-                disabled={setResultsOnlyMutation.isPending}
-                className="px-4 py-2 rounded-md bg-app-gold text-app-bg text-sm font-medium hover:bg-app-gold/90 transition-colors disabled:opacity-50"
-              >
-                {setResultsOnlyMutation.isPending ? '处理中...' : '确认录入'}
-              </button>
-            )}
-            <button
-              onClick={() => setConfirming(false)}
-              className="px-4 py-2 rounded-md border border-app-border text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              取消
-            </button>
-          </div>
         ) : (
           <div className="flex items-center gap-3">
             <span className="text-sm text-app-red">撤销后允许重新开奖，但之前发的分红不会收回</span>
