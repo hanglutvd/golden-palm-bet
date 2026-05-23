@@ -297,6 +297,45 @@ export const adminRouter = createRouter({
     return { success: true, message: "已撤销开奖记录，可以重新开奖。注意：之前发放的分红不会从用户账户中扣除。" };
   }),
 
+  // Leaderboard for admin: returns all users with wechatId (admin-only)
+  leaderboard: adminQuery.query(async () => {
+    const db = getDb();
+    const allUsers = await db.select().from(users);
+    const allMovies = await db.select().from(movies);
+    const allHoldings = await db.select().from(holdings);
+
+    const moviePrices: Record<number, number> = {};
+    for (const m of allMovies) {
+      moviePrices[m.id] = Number(m.currentPrice);
+    }
+
+    const userAssets = allUsers.map((u) => {
+      const userHoldings = allHoldings.filter((h) => h.userId === u.id);
+      const marketValue = userHoldings.reduce((sum, h) => {
+        const price = moviePrices[h.movieId] || 0;
+        return sum + price * h.quantity;
+      }, 0);
+      const balance = Number(u.balance);
+      return {
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        balance,
+        marketValue,
+        totalAssets: balance + marketValue,
+        wechatId: u.wechatId,
+        role: u.role,
+      };
+    });
+
+    userAssets.sort((a, b) => b.totalAssets - a.totalAssets);
+
+    return userAssets.map((u, idx) => ({
+      rank: idx + 1,
+      ...u,
+    }));
+  }),
+
   // Public query: list award results (shown on homepage)
   listAwardResults: publicQuery.query(async () => {
     const db = getDb();

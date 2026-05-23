@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, Film, Trophy, Users, ArrowLeft, Shield, BarChart3, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Film, Trophy, Users, ArrowLeft, Shield, BarChart3, Menu, X, Medal } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminDashboard } from '@/pages/AdminDashboard';
 import { AdminMovies } from '@/pages/AdminMovies';
 import { AdminAwards } from '@/pages/AdminAwards';
 import { AdminUsers } from '@/pages/AdminUsers';
 import { AdminMarketImage } from '@/pages/AdminMarketImage';
+import { AdminLeaderboard } from '@/pages/AdminLeaderboard';
 
 const menuItems = [
   { label: '概览', key: 'dashboard', icon: LayoutDashboard, component: AdminDashboard },
   { label: '电影管理', key: 'movies', icon: Film, component: AdminMovies },
   { label: '开奖管理', key: 'awards', icon: Trophy, component: AdminAwards },
   { label: '用户管理', key: 'users', icon: Users, component: AdminUsers },
+  { label: '财富排行', key: 'leaderboard', icon: Medal, component: AdminLeaderboard },
   { label: '行情图片', key: 'market-image', icon: BarChart3, component: AdminMarketImage },
 ];
 
