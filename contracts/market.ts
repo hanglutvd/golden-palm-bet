@@ -215,6 +215,13 @@ export function isLaunchLock(): boolean {
  * 3. After 5/13 09:00: normal trading hours
  */
 export function assertTradingHours(): void {
+  // Phase 0: Market permanently closed
+  if (isMarketClosed()) {
+    throw new Error(
+      "股市已永久闭市。感谢各位玩家的参与！分红结果将在颁奖后统一结算。"
+    );
+  }
+
   // Phase 1: Pre-launch period — unlimited trading
   if (isPreLaunch()) return;
 

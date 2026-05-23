@@ -8,7 +8,7 @@ import { trpc } from '@/providers/trpc';
 import { useAuth } from '@/hooks/useAuth';
 import { GameCoin } from '@/components/GameCoin';
 import { formatPremiereDate } from '@/lib/dateUtils';
-import { getMarketStatus, formatTimeRemaining, isPreLaunch } from '@contracts/market';
+import { getMarketStatus, formatTimeRemaining, isPreLaunch, isMarketClosed } from '@contracts/market';
 import type { MovieQuote } from '@/types';
 
 interface MovieDetailModalProps {
@@ -118,7 +118,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
   const total = (price * quantity).toFixed(2);
   const trendColor = isUp ? '#4ade80' : isDown ? '#f87171' : '#a0a0a0';
   const isPending = buyMutation.isPending || sellMutation.isPending;
-  const marketClosed = !isPreLaunch() && !marketStatus.isOpen;
+  const marketClosed = isMarketClosed() || (!isPreLaunch() && !marketStatus.isOpen);
 
   const myHolding = myHoldings?.find((h) => h.movieId === movieId);
   const currentQty = myHolding?.quantity || 0;
@@ -316,7 +316,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
                 <button onClick={handleTrade} disabled={isPending || marketClosed} className={`w-full rounded-md py-2.5 text-sm font-medium text-white transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${mode === 'buy' ? 'bg-app-green hover:bg-emerald-400 hover:shadow-[0_2px_12px_rgba(91,140,90,0.3)]' : 'bg-app-red hover:bg-red-400 hover:shadow-[0_2px_12px_rgba(248,113,113,0.3)]'}`}>
                   <span className="flex items-center justify-center gap-2">
                     <ShoppingCart className="h-4 w-4" />
-                    {isPending ? '处理中...' : marketClosed ? '休市中' : mode === 'buy' ? '确认买入' : '确认卖出'}
+                    {isPending ? '处理中...' : isMarketClosed() ? '已闭市' : marketClosed ? '休市中' : mode === 'buy' ? '确认买入' : '确认卖出'}
                   </span>
                 </button>
               </div>
@@ -329,7 +329,7 @@ export function MovieDetailModal({ open, onClose, movie }: MovieDetailModalProps
             <p className="text-xs text-app-gold leading-relaxed">
               {isPreLaunch() 
                 ? "🔥 预热期：价格锁定为100，可自由交易不限次数。5月13日09:00正式开盘后，根据累积净成交量统一调整价格并展现涨跌幅。" 
-                : "每个时段每部电影只能买入或卖出一次（不能同时买和卖）。交易期间价格锁定为时段开盘价。上午 12:00 收盘后调整下午 15:00 开盘价，下午 18:00 收盘后调整次日 09:00 开盘价——系统根据各时段净成交量统一更新。"}
+                : "每个时段每部电影只能买入或卖出一次（不能同时买和卖）。每部电影最多持20股，所有电影总持股不超过100股。上午 12:00 收盘后调整下午 15:00 开盘价，下午 18:00 收盘后调整次日 09:00 开盘价——系统根据各时段净成交量统一更新。"}
             </p>
           </div>
         </div>
