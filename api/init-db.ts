@@ -61,6 +61,9 @@ export function initDatabase() {
     )
   `);
 
+  // Migrate: add wechat_id to users table (for top 10 winners contact)
+  try { db.run(`ALTER TABLE users ADD COLUMN wechat_id TEXT`); } catch {}
+
   // Migrate: add username_changed_at to users table
   try { db.run(`ALTER TABLE users ADD COLUMN username_changed_at INTEGER`); } catch {}
 

@@ -139,7 +139,7 @@ export function LeaderboardModal({ open, onClose }: LeaderboardModalProps) {
               ) : (
                 entries.map((entry) => {
                   const isTop3 = entry.rank <= 3;
-                  const isMe = user && entry.username === user.username;
+                  const isMe = user && entry.userId === user.id;
                   return (
                     <div key={entry.rank}>
                       <div

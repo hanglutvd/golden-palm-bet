@@ -46,6 +46,7 @@ export const leaderboardRouter = createRouter({
 
     return userAssets.map((u, idx) => ({
       rank: idx + 1,
+      userId: u.id,
       username: u.username,
       balance: u.balance,
       marketValue: u.marketValue,
